@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "kinit"
+name = "krb5"
 version = "0.1.0"
-description = "Kinit exposed through Python"
+description = "KRB5 API exposed through Python"
 authors = ["Jordan Borean <jborean93@gmail.com>"]
 license = "MIT"
-keywords = ["krb5", "kinit", "kerberos", "gssapi"]
+keywords = ["krb5", "kerberos"]
 readme = "README.md"
-homepage = "https://github.com/jborean93/pykinit"
+homepage = "https://github.com/jborean93/pykrb5"
 include = [
     "CHANGELOG.md",
 ]

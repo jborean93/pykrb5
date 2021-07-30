@@ -1,3 +1,3 @@
-# Python Kinit Library
+# Python Kerberos 5 Library
 
 Info here

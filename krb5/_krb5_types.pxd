@@ -1,8 +1,10 @@
+# Copyright: (c) 2021 Jordan Borean (@jborean93) <jborean93@gmail.com>
+# MIT License (see LICENSE or https://opensource.org/licenses/MIT)
+
 from libc.stdint cimport int32_t, uint8_t
 
 
 cdef extern from "krb5.h":
-    # Basic types
     ctypedef int32_t krb5_int32
     ctypedef krb5_int32 krb5_error_code
     ctypedef krb5_int32 krb5_deltat
@@ -13,7 +15,6 @@ cdef extern from "krb5.h":
     ctypedef unsigned int krb5_boolean
     ctypedef krb5_int32 krb5_flags
 
-    # Structs
     cdef struct _krb5_context:
         pass
     ctypedef _krb5_context *krb5_context
@@ -21,6 +22,7 @@ cdef extern from "krb5.h":
     cdef struct krb5_principal_data:
         pass
     ctypedef krb5_principal_data *krb5_principal
+    ctypedef const krb5_principal_data *krb5_const_principal
 
     cdef struct _krb5_ccache:
         pass
@@ -58,6 +60,10 @@ cdef extern from "krb5.h":
         pass
     ctypedef _krb5_authdata krb5_authdata
 
+    cdef struct _krb5_kt:
+        pass
+    ctypedef _krb5_kt *krb5_keytab
+
     cdef struct _krb5_creds:
         krb5_magic magic
         krb5_principal client
@@ -77,19 +83,3 @@ cdef extern from "krb5.h":
         int hidden
         krb5_data *reply
     ctypedef _krb5_prompt krb5_prompt
-
-    # Callback functions
-    ctypedef krb5_error_code(*krb5_prompter_fct)(
-        krb5_context context,
-        void *data,
-        const char *name,
-        const char *banner,
-        int num_prompts,
-        krb5_prompt prompts[],
-    )
-
-    # Definitions
-    int32_t KRB5_PRINCIPAL_PARSE_NO_REALM
-    int32_t KRB5_PRINCIPAL_PARSE_REQUIRE_REALM
-    int32_t KRB5_PRINCIPAL_PARSE_ENTERPRISE
-    int32_t KRB5_PRINCIPAL_PARSE_IGNORE_REALM

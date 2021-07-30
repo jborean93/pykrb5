@@ -1,11 +1,9 @@
+import os.path
 import shlex
+import typing
 
 from Cython.Build import cythonize
 from setuptools import Extension
-
-modules = [
-    "kinit/_krb5.pyx",
-]
 
 # krb5-config --libs krb5
 raw_link_args = shlex.split("-Wl,-z,relro -Wl,--as-needed -Wl,-z,now -lkrb5 -lk5crypto -lcom_err")
@@ -21,22 +19,40 @@ for arg in raw_link_args:
 # krb5-config --cflags krb5
 compile_args = shlex.split("")
 
+
+def make_extension(name: str) -> Extension:  # type: ignore[no-any-unimported]
+    source = name.replace(".", "/") + ".pyx"
+    if not os.path.exists(source):
+        raise FileNotFoundError(source)
+
+    return Extension(
+        name=name,
+        sources=[source],
+        extra_link_args=link_args,
+        extra_compile_args=compile_args,
+        library_dirs=library_dirs,
+        libraries=libraries,
+    )
+
+
 extensions = cythonize(
     [
-        Extension(
-            name="kinit._krb5",
-            sources=["kinit/_krb5.pyx"],
-            extra_link_args=link_args,
-            extra_compile_args=compile_args,
-            library_dirs=library_dirs,
-            libraries=libraries,
-        ),
+        make_extension(f"krb5._{e}")
+        for e in [
+            "ccache",
+            "context",
+            "creds",
+            "creds_opt",
+            "exceptions",
+            "kt",
+            "principal",
+        ]
     ],
     language_level=3,
 )
 
 
-def build(setup_kwargs):
+def build(setup_kwargs: typing.Dict) -> None:
     """Needed for the poetry building interface."""
 
     setup_kwargs.update(
