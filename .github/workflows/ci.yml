@@ -1,0 +1,172 @@
+name: Test pykrb5
+on:
+  push:
+    branches:
+    - main
+    paths-ignore:
+    - CHANGELOG.md
+    - LICENSE
+    - README.md
+
+  pull_request:
+    branches:
+    - main
+    paths-ignore:
+    - CHANGELOG.md
+    - LICENSE
+    - README.md
+
+  release:
+    types:
+    - published
+
+  schedule:
+  - cron: 0 9 * * *
+
+jobs:
+  build:
+    name: build sdist
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: install build pre-requisites
+      run: pip install setuptools Cython
+
+    # FUTURE: This shouldn't be needed to generate the sdist
+    - name: install Linux pre-reqs
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libkrb5-dev
+
+    - name: build sdist
+      run: python setup.py sdist
+      env:
+        KRB5_SKIP_MODULE_CHECK: true
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: artifact
+        path: ./dist/*.tar.gz
+
+  build_wheels:
+    name: build wheels
+    needs:
+    - build
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - macOS-10.15
+        version:
+        - cp36-macosx_x86_64
+        - cp37-macosx_x86_64
+        - cp38-macosx_x86_64
+        - cp38-macosx_arm64
+        - cp39-macosx_x86_64
+        - cp39-macosx_arm64
+
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: artifact
+        path: ./
+
+    - name: extract sdist
+      run: |
+        tar xf krb5-*.tar.gz
+        mv krb5-*/* .
+        rm -r krb5-*/
+        rm krb5-*.tar.gz
+
+    - name: build wheel
+      uses: pypa/cibuildwheel@v2.1.1
+      env:
+        CIBW_ARCHS: all
+        CIBW_TEST_SKIP: '*_arm64'
+        CIBW_BUILD: ${{ matrix.version }}
+        CIBW_BUILD_VERBOSITY: 1
+
+    - uses: actions/upload-artifact@v2
+      with:
+        path: ./wheelhouse/*.whl
+        name: artifact
+
+  test:
+    name: test
+    needs:
+    - build
+    - build_wheels
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-latest
+        - macOS-latest
+        python-version:
+        - 3.6
+        - 3.7
+        - 3.8
+        - 3.9
+        provider:
+        - mit
+        - heimdal
+
+        exclude:
+        - os: macOS-latest
+          provider: mit
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - uses: actions/download-artifact@v2
+      with:
+        name: artifact
+        path: ./dist
+
+    - name: Test
+      run: sudo -E build_helpers/run-ci.sh
+      env:
+        KRB5_PROVIDER: ${{ matrix.provider }}
+        PYTEST_ADDOPTS: --color=yes
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: Unit Test Results (${{ matrix.os }} ${{ matrix.provider }} ${{ matrix.python-version }})
+        path: ./junit/test-results.xml
+
+  publish:
+    name: publish
+    needs:
+    - test
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v2
+
+    - uses: actions/download-artifact@v2
+      with:
+        name: artifact
+        path: ./dist
+
+    - name: Publish
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}

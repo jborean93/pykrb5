@@ -13,4 +13,6 @@ repos:
   rev: v0.910
   hooks:
   - id: mypy
-    exclude: ^tests/
+    exclude: setup.py
+    additional_dependencies:
+    - pytest

@@ -1,0 +1,9 @@
+Cython
+black
+isort
+mypy
+pre-commit
+pytest
+tox
+wheel
+https://github.com/jborean93/k5test/archive/heimdal.tar.gz
