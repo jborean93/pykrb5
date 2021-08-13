@@ -18,6 +18,7 @@ from krb5._context import Context, get_default_realm, init_context, set_default_
 from krb5._creds import (
     Creds,
     InitCredsContext,
+    Krb5Prompt,
     get_init_creds_keytab,
     get_init_creds_password,
     init_creds_get,
@@ -57,6 +58,7 @@ __all__ = [
     "InitCredsContext",
     "KeyTab",
     "Krb5Error",
+    "Krb5Prompt",
     "Principal",
     "PrincipalParseFlags",
     "PrincipalUnparseFlags",

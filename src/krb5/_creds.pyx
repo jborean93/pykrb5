@@ -115,7 +115,21 @@ cdef class InitCredsContext:
         return "InitCredsContext"
 
 
-Krb5Prompt = collections.namedtuple("Krb5Prompt", ["msg", "hidden"])
+cdef class Krb5Prompt:
+    def init(
+        self,
+        name: typing.Optional[bytes],
+        banner: typing.Optional[bytes],
+        num_prompts: int,
+    ) -> None:
+        pass
+
+    def prompt(
+        self,
+        msg: bytes,
+        hidden: bool,
+    ) -> bytes:
+        raise NotImplementedError()
 
 
 cdef krb5_error_code prompt_callback(
@@ -126,33 +140,39 @@ cdef krb5_error_code prompt_callback(
     int num_prompts,
     krb5_prompt *prompts,
 ) with gil:
-    # FIXME: Properly expose this publicly.
     try:
+        prompter = <Krb5Prompt>data
+
         py_name = None if name == NULL else <bytes>name
         py_banner = None if banner == NULL else <bytes>banner
-        py_prompts = []
+        prompter.init(py_name, py_banner, num_prompts)
+
+        replies = []
         for prompt in prompts[:num_prompts]:
             msg = <bytes>prompt.prompt
             hidden = prompt.hidden != 0
-            py_prompts.append(Krb5Prompt(msg, hidden))
 
-        replies = (<object>data)(py_name, py_banner, py_prompts)
+            reply = prompter.prompt(msg, hidden)
+            if not isinstance(reply, bytes):
+                return 1
+
+            replies.append(reply)
+
         for idx, reply in enumerate(replies):
             prompts[idx].reply.length = len(reply)
             prompts[idx].reply.data = <char *>reply
 
         return 0
 
-    except Exception as e:
-        print(str(e))  # FIXME: Remove
+    except Exception:
         return 1
 
 
 def get_init_creds_keytab(
     Context context not None,
     Principal client not None,
-    KeyTab keytab not None,
     GetInitCredsOpt k5_gic_options not None,
+    KeyTab keytab not None,
     int start_time = 0,
     const unsigned char[:] in_tkt_service = None,
 ) -> Creds:
@@ -185,13 +205,11 @@ def get_init_creds_keytab(
 def get_init_creds_password(
     Context context not None,
     Principal client not None,
-    const unsigned char[:] password,
     GetInitCredsOpt k5_gic_options not None,
+    const unsigned char[:] password = None,
     int start_time = 0,
     const unsigned char[:] in_tkt_service = None,
-    prompter: typing.Optional[typing.Callable[
-        typing.Optional[bytes], typing.Optional[bytes], typing.List[Krb5Prompt]], typing.List[bytes]
-    ] = None
+    prompter: typing.Optional[Krb5Prompt] = None,
 ) -> Creds:
     creds = Creds(context)
     cdef krb5_error_code err = 0
@@ -200,8 +218,10 @@ def get_init_creds_password(
     if password is not None and len(password):
         password_ptr = <const char*>&password[0]
 
+    cdef krb5_prompter_fct callback = NULL
     cdef void *prompt_data = NULL
     if prompter is not None:
+        callback = prompt_callback
         prompt_data = <void*>prompter
 
     cdef const char *in_tkt_service_ptr = NULL
@@ -214,7 +234,7 @@ def get_init_creds_password(
             &creds.raw,
             client.raw,
             password_ptr,
-            prompt_callback,
+            callback,
             prompt_data,
             start_time,
             in_tkt_service_ptr,
@@ -262,9 +282,7 @@ def init_creds_init(
     Principal client not None,
     GetInitCredsOpt k5_gic_options = None,
     int start_time = 0,
-    prompter: typing.Optional[typing.Callable[
-        typing.Optional[bytes], typing.Optional[bytes], typing.List[Krb5Prompt]], typing.List[bytes]
-    ] = None
+    prompter: typing.Optional[Krb5Prompt] = None,
 ) -> InitCredsContext:
     creds_ctx = InitCredsContext(context)
     cdef krb5_error_code err = 0
@@ -273,15 +291,17 @@ def init_creds_init(
     if k5_gic_options:
         options = k5_gic_options.raw
 
+    cdef krb5_prompter_fct callback = NULL
     cdef void *prompt_data = NULL
     if prompter is not None:
+        callback = prompt_callback
         prompt_data = <void*>prompter
 
     with nogil:
         err = krb5_init_creds_init(
             context.raw,
             client.raw,
-            prompt_callback,
+            callback,
             prompt_data,
             start_time,
             options,
