@@ -1,6 +1,7 @@
 {
     "editor.formatOnSave": true,
     "editor.rulers": [
+        80,
         120
     ],
     "files.trimTrailingWhitespace": true,
@@ -21,5 +22,6 @@
     },
     "python.linting.ignorePatterns": [
         "tests/**"
-    ]
+    ],
+    "python.envFile": "${workspaceFolder}/.vscode/.env",
 }
