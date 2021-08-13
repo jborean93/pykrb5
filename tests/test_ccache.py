@@ -120,7 +120,7 @@ def test_cc_store_cred(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
     ctx = krb5.init_context()
     princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
     opt = krb5.get_init_creds_opt_alloc(ctx)
-    creds = krb5.get_init_creds_password(ctx, princ, realm.password("user").encode(), opt)
+    creds = krb5.get_init_creds_password(ctx, princ, opt, realm.password("user").encode())
 
     cc = krb5.cc_resolve(ctx, f"{tmp_path / 'ccache'}".encode())
     krb5.cc_initialize(ctx, cc, princ)

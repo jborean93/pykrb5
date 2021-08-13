@@ -14,3 +14,7 @@ cdef class Creds:
 cdef class InitCredsContext:
     cdef Context ctx
     cdef krb5_init_creds_context raw
+
+
+cdef class Krb5Prompt:
+    pass
