@@ -6,7 +6,7 @@
         {
             "label": "Build",
             "type": "shell",
-            "command": "poetry install",
+            "command": "python setup.py build_ext --inplace",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
