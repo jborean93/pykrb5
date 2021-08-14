@@ -81,3 +81,12 @@ def test_unparse_principal(realm: k5test.K5Realm) -> None:
     krb5.set_default_realm(ctx, b"NEW.REALM")
     short = krb5.unparse_name_flags(ctx, principal, flags=krb5.PrincipalUnparseFlags.short)
     assert short == b"role/abc\\/def\\@test@" + realm.realm.encode()
+
+
+@pytest.mark.requires_api("principal_get_realm")
+def test_principal_get_realm() -> None:
+    ctx = krb5.init_context()
+    principal = krb5.parse_name_flags(ctx, b"username@REALM.COM")
+
+    realm = krb5.principal_get_realm(ctx, principal)
+    assert realm == b"REALM.COM"

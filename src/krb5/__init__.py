@@ -149,3 +149,11 @@ except ImportError:
     pass
 else:
     __all__.extend(["kt_get_full_name", "kt_get_type"])
+
+
+try:
+    from krb5._principal_heimdal import principal_get_realm
+except ImportError:
+    pass
+else:
+    __all__.extend(["principal_get_realm"])
