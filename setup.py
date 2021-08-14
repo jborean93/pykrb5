@@ -250,6 +250,7 @@ for e in [
     ("kt_mit", "krb5_kt_dup"),
     ("kt_heimdal", "krb5_kt_get_full_name"),
     "principal",
+    ("principal_heimdal", "krb5_principal_get_realm"),
 ]:
     name = e
     canary = None
