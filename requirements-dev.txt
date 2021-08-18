@@ -1,9 +1,9 @@
 Cython
 black
 isort
+k5test>=0.10.0
 mypy
 pre-commit
 pytest
 tox
 wheel
-https://github.com/jborean93/k5test/archive/heimdal.tar.gz
