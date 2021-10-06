@@ -72,6 +72,8 @@ jobs:
         - cp38-macosx_arm64
         - cp39-macosx_x86_64
         - cp39-macosx_arm64
+        - cp310-macosx_x86_64
+        - cp310-macosx_arm64
 
     steps:
     - uses: actions/download-artifact@v2
@@ -117,6 +119,7 @@ jobs:
         - 3.7
         - 3.8
         - 3.9
+        - '3.10'
         provider:
         - mit
         - heimdal
