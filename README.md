@@ -1,7 +1,7 @@
 # Python Kerberos 5 Library
 
 [![Test workflow](https://github.com/jborean93/pykrb5/actions/workflows/ci.yml/badge.svg)](https://github.com/jborean93/pykrb5/actions/workflows/ci.yml)
-[![PyPI version](https://badge.fury.io/py/pykrb5.svg)](https://badge.fury.io/py/pykrb5)
+[![PyPI version](https://badge.fury.io/py/krb5.svg)](https://badge.fury.io/py/krb5)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jborean93/pykrb5/blob/main/LICENSE)
 
 This library provides Python functions that wraps the Kerberos 5 C API.
