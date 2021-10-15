@@ -11,6 +11,36 @@ import pytest
 import krb5
 
 
+def test_cc_cache_match(realm: k5test.K5Realm, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KRB5CCNAME", "DIR:" + str(tmp_path))
+    ctx = krb5.init_context()
+    admin_princ = krb5.parse_name_flags(ctx, realm.admin_princ.encode())
+    user_princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
+    opt = krb5.get_init_creds_opt_alloc(ctx)
+
+    admin_ccache = krb5.cc_default(ctx)
+    krb5.cc_initialize(ctx, admin_ccache, admin_princ)
+    admin_creds = krb5.get_init_creds_password(ctx, admin_princ, opt, realm.password("admin").encode())
+    krb5.cc_store_cred(ctx, admin_ccache, admin_creds)
+
+    user_ccache = krb5.cc_resolve(ctx, b"DIR::" + bytes(tmp_path) + b"/tkt-user")
+    krb5.cc_initialize(ctx, user_ccache, user_princ)
+    user_creds = krb5.get_init_creds_password(ctx, user_princ, opt, realm.password("user").encode())
+    krb5.cc_store_cred(ctx, user_ccache, user_creds)
+
+    admin_actual = krb5.cc_cache_match(ctx, admin_princ)
+    assert admin_actual.cache_type == b"DIR"
+    assert admin_actual.name == b":" + bytes(tmp_path) + b"/tkt"
+    assert admin_actual.principal
+    assert admin_actual.principal.name == admin_princ.name
+
+    user_actual = krb5.cc_cache_match(ctx, user_princ)
+    assert user_actual.cache_type == b"DIR"
+    assert user_actual.name == b":" + bytes(tmp_path) + b"/tkt-user"
+    assert user_actual.principal
+    assert user_actual.principal.name == user_princ.name
+
+
 def test_cc_default(realm: k5test.K5Realm) -> None:
     ctx = krb5.init_context()
 
@@ -144,3 +174,54 @@ def test_cc_dup() -> None:
     assert copied_cc.name == cc_name
     assert str(copied_cc.principal) == "user@REALM"
     assert copied_cc.addr != cc_addr
+
+
+def test_cc_supports_switch_invalid_type() -> None:
+    with pytest.raises(ValueError, match="cache_type cannot be an empty byte string"):
+        krb5.cc_support_switch(krb5.init_context(), b"")
+
+
+@pytest.mark.parametrize(
+    "cache_type, expected",
+    [
+        (b"FILE", False),
+        (b"DIR", True),
+    ],
+    ids=["FILE", "DIR"],
+)
+def test_cc_supports_switch(cache_type: bytes, expected: bool) -> None:
+    actual = krb5.cc_support_switch(krb5.init_context(), cache_type)
+    assert actual is expected
+
+
+def test_cc_switch(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
+    ctx = krb5.init_context()
+    admin_princ = krb5.parse_name_flags(ctx, realm.admin_princ.encode())
+    user_princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
+    opt = krb5.get_init_creds_opt_alloc(ctx)
+
+    admin_ccache = krb5.cc_resolve(ctx, b"DIR:" + bytes(tmp_path))
+    krb5.cc_initialize(ctx, admin_ccache, admin_princ)
+    # admin_creds = krb5.get_init_creds_password(ctx, admin_princ, opt, realm.password("admin").encode())
+    # krb5.cc_store_cred(ctx, admin_ccache, admin_creds)
+
+    user_ccache = krb5.cc_resolve(ctx, b"DIR::" + bytes(tmp_path) + b"/tkt-user")
+    krb5.cc_initialize(ctx, user_ccache, user_princ)
+    # user_creds = krb5.get_init_creds_password(ctx, user_princ, opt, realm.password("user").encode())
+    # krb5.cc_store_cred(ctx, user_ccache, user_creds)
+
+    krb5.cc_switch(ctx, user_ccache)
+
+    actual = krb5.cc_resolve(ctx, b"DIR:" + bytes(tmp_path))
+    assert actual.cache_type == b"DIR"
+    assert actual.name == b":" + bytes(tmp_path) + b"/tkt-user"
+    assert actual.principal
+    assert actual.principal.name == user_princ.name
+
+    krb5.cc_switch(ctx, admin_ccache)
+
+    actual = krb5.cc_resolve(ctx, b"DIR:" + bytes(tmp_path))
+    assert actual.cache_type == b"DIR"
+    assert actual.name == b":" + bytes(tmp_path) + b"/tkt"
+    assert actual.principal
+    assert actual.principal.name == admin_princ.name

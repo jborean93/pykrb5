@@ -3,6 +3,7 @@
 
 from krb5._ccache import (
     CCache,
+    cc_cache_match,
     cc_default,
     cc_default_name,
     cc_destroy,
@@ -13,6 +14,8 @@ from krb5._ccache import (
     cc_new_unique,
     cc_resolve,
     cc_store_cred,
+    cc_support_switch,
+    cc_switch,
 )
 from krb5._context import Context, get_default_realm, init_context, set_default_realm
 from krb5._creds import (
@@ -62,6 +65,7 @@ __all__ = [
     "Principal",
     "PrincipalParseFlags",
     "PrincipalUnparseFlags",
+    "cc_cache_match",
     "cc_default",
     "cc_default_name",
     "cc_destroy",
@@ -72,6 +76,8 @@ __all__ = [
     "cc_new_unique",
     "cc_resolve",
     "cc_store_cred",
+    "cc_support_switch",
+    "cc_switch",
     "get_default_realm",
     "get_init_creds_keytab",
     "get_init_creds_opt_alloc",
