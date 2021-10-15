@@ -4,6 +4,7 @@
 import os
 import os.path
 import pathlib
+import sys
 
 import k5test
 import pytest
@@ -12,6 +13,12 @@ import krb5
 
 
 def test_cc_cache_match(realm: k5test.K5Realm, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Heimdal has a bug trying to iterate through a DIR collection ccache. This has been fixed on the master branch but
+    # there are no releases that would contain this bugfix so we skip the test.
+    # https://github.com/heimdal/heimdal/commit/7bf4d76e75e904dd65a0fbb90c9cad981245f714
+    if realm.provider.lower() == "heimdal":
+        pytest.skip("Doesnt work on macOS (no DIR support) and current Heimdal releases have a bug")
+
     monkeypatch.setenv("KRB5CCNAME", "DIR:" + str(tmp_path))
     ctx = krb5.init_context()
     admin_princ = krb5.parse_name_flags(ctx, realm.admin_princ.encode())
@@ -185,7 +192,8 @@ def test_cc_supports_switch_invalid_type() -> None:
     "cache_type, expected",
     [
         (b"FILE", False),
-        (b"DIR", True),
+        # macOS doesn't support the DIR type so this returns False
+        (b"DIR", False if sys.platform == "darwin" else True),
     ],
     ids=["FILE", "DIR"],
 )
@@ -195,26 +203,28 @@ def test_cc_supports_switch(cache_type: bytes, expected: bool) -> None:
 
 
 def test_cc_switch(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
+    # Heimdal has a bug where it thinks the sub collection ccache doesn't start with tkt (even when it does). I believe
+    # this has been fixed but there are no releases of Heimdal that would contain this bugfix so we skip the test.
+    # https://github.com/heimdal/heimdal/commit/7bf4d76e75e904dd65a0fbb90c9cad981245f714
+    if realm.provider.lower() == "heimdal":
+        pytest.skip("Doesnt work on macOS (no DIR support) and current Heimdal releases have a bug")
+
     ctx = krb5.init_context()
     admin_princ = krb5.parse_name_flags(ctx, realm.admin_princ.encode())
     user_princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
-    opt = krb5.get_init_creds_opt_alloc(ctx)
 
     admin_ccache = krb5.cc_resolve(ctx, b"DIR:" + bytes(tmp_path))
     krb5.cc_initialize(ctx, admin_ccache, admin_princ)
-    # admin_creds = krb5.get_init_creds_password(ctx, admin_princ, opt, realm.password("admin").encode())
-    # krb5.cc_store_cred(ctx, admin_ccache, admin_creds)
 
-    user_ccache = krb5.cc_resolve(ctx, b"DIR::" + bytes(tmp_path) + b"/tkt-user")
+    user_ccache = krb5.cc_resolve(ctx, b"DIR::" + bytes(tmp_path / "tkt-user"))
     krb5.cc_initialize(ctx, user_ccache, user_princ)
-    # user_creds = krb5.get_init_creds_password(ctx, user_princ, opt, realm.password("user").encode())
-    # krb5.cc_store_cred(ctx, user_ccache, user_creds)
 
+    print(user_ccache.name)
     krb5.cc_switch(ctx, user_ccache)
 
     actual = krb5.cc_resolve(ctx, b"DIR:" + bytes(tmp_path))
     assert actual.cache_type == b"DIR"
-    assert actual.name == b":" + bytes(tmp_path) + b"/tkt-user"
+    assert actual.name == b":" + bytes(tmp_path / "tkt-user")
     assert actual.principal
     assert actual.principal.name == user_princ.name
 
@@ -222,6 +232,6 @@ def test_cc_switch(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
 
     actual = krb5.cc_resolve(ctx, b"DIR:" + bytes(tmp_path))
     assert actual.cache_type == b"DIR"
-    assert actual.name == b":" + bytes(tmp_path) + b"/tkt"
+    assert actual.name == b":" + bytes(tmp_path / "tkt")
     assert actual.principal
     assert actual.principal.name == admin_princ.name
