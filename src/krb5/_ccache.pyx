@@ -15,6 +15,12 @@ from krb5._principal cimport Principal
 
 
 cdef extern from "python_krb5.h":
+    krb5_error_code krb5_cc_cache_match(
+        krb5_context context,
+        krb5_principal client,
+        krb5_ccache *cache_out,
+    ) nogil
+
     krb5_error_code krb5_cc_close(
         krb5_context context,
         krb5_ccache cache,
@@ -75,6 +81,16 @@ cdef extern from "python_krb5.h":
         krb5_creds *creds,
     ) nogil
 
+    krb5_boolean krb5_cc_support_switch(
+        krb5_context context,
+        const char *type,
+    ) nogil
+
+    krb5_error_code krb5_cc_switch(
+        krb5_context context,
+        krb5_ccache cache,
+    ) nogil
+
 
 cdef class CCache:
     # cdef Context ctx
@@ -127,6 +143,20 @@ cdef class CCache:
 
         else:
             return "NULL"
+
+
+def cc_cache_match(
+    Context context not None,
+    Principal principal not None,
+) -> CCache:
+    ccache = CCache(context)
+    cdef krb5_error_code err = 0
+
+    err = krb5_cc_cache_match(context.raw, principal.raw, &ccache.raw)
+    if err:
+        raise Krb5Error(context, err)
+
+    return ccache
 
 
 def cc_default(
@@ -251,5 +281,29 @@ def cc_store_cred(
     cdef krb5_error_code err = 0
 
     err = krb5_cc_store_cred(context.raw, cache.raw, &creds.raw)
+    if err:
+        raise Krb5Error(context, err)
+
+
+def cc_support_switch(
+    Context context not None,
+    const unsigned char[:] cache_type not None,
+) -> bool:
+    cdef const char *type_ptr = NULL
+    if len(cache_type):
+        type_ptr = <const char*>&cache_type[0]
+    else:
+        raise ValueError("cache_type cannot be an empty byte string")
+
+    return bool(krb5_cc_support_switch(context.raw, type_ptr))
+
+
+def cc_switch(
+    Context context not None,
+    CCache cache not None,
+) -> None:
+    cdef krb5_error_code err = 0
+
+    err = krb5_cc_switch(context.raw, cache.raw)
     if err:
         raise Krb5Error(context, err)
