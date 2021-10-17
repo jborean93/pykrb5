@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 - TBD
+## 0.2.0 - 2021-10-18
 
 * Added [krb5_cc_switch](https://web.mit.edu/kerberos/krb5-1.11/doc/appdev/refs/api/krb5_cc_switch.html)
   * Used to switch the primary credential cache in a collection credential cache
