@@ -4,6 +4,8 @@
 import typing
 
 from krb5._context import Context
+from krb5._keyblock import KeyBlock
+from krb5._principal import Principal
 
 class KeyTab:
     """Kerberos KeyTab object.
@@ -14,6 +16,13 @@ class KeyTab:
         context: Krb5 context.
     """
 
+    def __iter__(self) -> typing.Iterator["KeyTabEntry"]:
+        """Iterate through keytab entries.
+
+        Enumerates through all the entries in a keytab. Will fail if the keytab
+        being iterated does not exist. It may not be possible to add/remove
+        entries on a keytab while it is being enumerated.
+        """
     @property
     def addr(self) -> typing.Optional[int]:
         """The raw krb5_keytab pointer address of this credential cache."""
@@ -23,6 +32,56 @@ class KeyTab:
     @property
     def kt_type(self) -> typing.Optional[bytes]:
         """The type of the keytab."""
+
+class KeyTabEntry:
+    """Kerberos KeyTabEntry object.
+
+    This class represents a key table entry.
+
+    Note:
+        When using a key tab entry from enumerating a :class:`KeyTab`, the
+        key and principal value is tied to the lifetime of the entry. Attempting
+        to use either of these after the entry is out of scope and has been
+        freed will crash the process.
+
+    Args:
+        context:
+        keytab:
+    """
+
+    @property
+    def key(self) -> KeyBlock:
+        """The keytab key data block."""
+    @property
+    def kvno(self) -> int:
+        """The key version number associated with the keytab entry."""
+    @property
+    def principal(self) -> Principal:
+        """The principal associated with the keytab entry."""
+    @property
+    def timestamp(self) -> int:
+        """The time creation entry of the keytab entry."""
+
+def kt_add_entry(
+    context: Context,
+    keytab: KeyTab,
+    principal: Principal,
+    kvno: int,
+    timestamp: int,
+    keyblock: KeyBlock,
+) -> None:
+    """Add new keytab entry.
+
+    Adds a new entry to a key table.
+
+    Args:
+        context: Krb5 context.
+        keytab: Key table to add the entry to.
+        principal: The principal to add in the keytab.
+        kvno: The key version number to add to the keytab.
+        timestamp: The seconds since EPOCH when the entry was added.
+        keyblock: The key and encryption type of the entry to add.
+    """
 
 def kt_default(
     context: Context,
@@ -50,6 +109,30 @@ def kt_default_name(
 
     Returns:
         bytes: The default key table name.
+    """
+
+def kt_get_entry(
+    context: Context,
+    keytab: KeyTab,
+    principal: Principal,
+    kvno: int = 0,
+    enctype: int = 0,
+) -> KeyTabEntry:
+    """Get an entry from a key table.
+
+    Retrieve an entry from a key table which matches the keytab, principal,
+    kvno, and enctype. If kvno is 0, retrieve the highest-numbered kvno
+    matching the other fields. If enctype is 0, match any enctype.
+
+    Args:
+        context: Krb5 context.
+        keytab: The keytab to search.
+        principal: The principal to match.
+        kvno: The kvno to match in the keytab or 0 to match the highest kvno.
+        enctype: The encryption type to get in the keytab or 0 to match any.
+
+    Returns:
+        KeyTabEntry: The entry found in the keytab.
     """
 
 def kt_get_name(
@@ -89,6 +172,58 @@ def kt_get_type(
 
     Returns:
         bytes: The type of the keytab.
+    """
+
+def kt_have_content(
+    context: Context,
+    keytab: KeyTab,
+) -> bool:
+    """Check if a keytab exists and contains entries.
+
+    Checks if the keytab passed in exists and contains entries.
+
+    Args:
+        context: Krb5 context.
+        keytab: They keytab to query.
+
+    Returns:
+        bool: Whether the keytab exists and contains entries.
+    """
+
+def kt_read_service_key(
+    context: Context,
+    name: typing.Optional[bytes],
+    principal: Principal,
+    kvno: int = 0,
+    enctype: int = 0,
+) -> KeyBlock:
+    """Retrieve a service key from a key table.
+
+    Args:
+        context: Krb5 context.
+        name: The keytable to open with :meth:`kt_resolve`, uses
+            :meth:`kt_default` if None or an empty byte string.
+        principal: The service principal to select in the keytab.
+        kvno: The key version number or 0 for the highest available.
+        enctype: The encryption type or 0 for any type.
+
+    Returns:
+        KeyBlock: The key associated with the keytab entry.
+    """
+
+def kt_remove_entry(
+    context: Context,
+    keytab: KeyTab,
+    entry: KeyTabEntry,
+) -> None:
+    """Remove keytab entry.
+
+    Removes an entry from a key table.
+
+    Args:
+        context: Krb5 context.
+        keytab: Key table to remove the entry from.
+        entry: The entry to be removed.
     """
 
 def kt_resolve(

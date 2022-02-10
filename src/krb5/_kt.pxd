@@ -8,3 +8,9 @@ from krb5._krb5_types cimport *
 cdef class KeyTab:
     cdef Context ctx
     cdef krb5_keytab raw
+
+
+cdef class KeyTabEntry:
+    cdef Context ctx
+    cdef krb5_keytab_entry raw
+    cdef int needs_free

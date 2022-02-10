@@ -3,19 +3,74 @@
 
 import typing
 
-from libc.stdint cimport uintptr_t
+from libc.stdint cimport uint32_t, uintptr_t
 from libc.stdlib cimport free, malloc, realloc
 from libc.string cimport strlen
 
 from krb5._exceptions import Krb5Error
+from krb5._principal import PrincipalParseFlags
 
 from krb5._context cimport Context
+from krb5._keyblock cimport KeyBlock
 from krb5._krb5_types cimport *
+from krb5._principal cimport Principal
 
 
 cdef extern from "python_krb5.h":
     # Heimdal and MIT differ in their implementations
     """
+    // The funtions do the structure manipulations in the C code as it can reference the struct entries by name rather
+    // than an explicitly defined offset in Cython which differ cross implementations.
+
+    void pykrb5_keytab_entry_get(
+        krb5_keytab_entry *entry,
+        krb5_principal *principal,
+        krb5_timestamp *timestamp,
+        krb5_kvno *vno,
+        krb5_keyblock **key
+    )
+    {
+        if (principal != NULL) *principal = entry->principal;
+        if (timestamp != NULL) *timestamp = entry->timestamp;
+        if (vno != NULL) *vno = entry->vno;
+    #if defined(HEIMDAL_XFREE)
+        if (key != NULL) *key = &entry->keyblock;
+    #else
+        if (key != NULL) *key = &entry->key;
+    #endif
+    }
+
+    krb5_error_code krb5_kt_add_entry_generic(
+        krb5_context context,
+        krb5_keytab keytab,
+        krb5_principal principal,
+        krb5_kvno kvno,
+        uint32_t timestamp,
+        krb5_keyblock *key
+    )
+    {
+        krb5_keytab_entry entry;
+
+    #if defined(HEIMDAL_XFREE)
+        entry.principal = principal;
+        entry.vno = kvno;
+        entry.keyblock.keytype = key->keytype;
+        entry.keyblock.keyvalue = key->keyvalue;
+        entry.timestamp = timestamp;
+    #else
+        entry.magic = 0;
+        entry.principal = principal;
+        entry.timestamp = timestamp;
+        entry.vno = kvno;
+        entry.key.magic = key->magic;
+        entry.key.enctype = key->enctype;
+        entry.key.length = key->length;
+        entry.key.contents = key->contents;
+    #endif
+
+        return krb5_kt_add_entry(context, keytab, &entry);
+    }
+
     krb5_error_code krb5_kt_get_type_generic(
         krb5_context context,
         krb5_keytab keytab,
@@ -31,7 +86,29 @@ cdef extern from "python_krb5.h":
         return krb5_kt_get_type(context, keytab, *prefix, prefixsize);
     #endif
     }
+
+    krb5_error_code krb5_kt_free_entry_generic(
+        krb5_context context,
+        krb5_keytab_entry *entry
+    )
+    {
+    // MIT has deprecated krb5_kt_free_entry in favour of this function
+    #if defined(HEIMDAL_XFREE)
+        return krb5_kt_free_entry(context, entry);
+    #else
+        return krb5_free_keytab_entry_contents(context, entry);
+    #endif
+    }
     """
+
+    krb5_error_code krb5_kt_add_entry_generic(
+        krb5_context context,
+        krb5_keytab keytab,
+        krb5_principal principal,
+        krb5_kvno kvno,
+        uint32_t timestamp,
+        krb5_keyblock *key,
+    ) nogil
 
     krb5_error_code krb5_kt_close(
         krb5_context context,
@@ -49,6 +126,26 @@ cdef extern from "python_krb5.h":
         int name_size,
     ) nogil
 
+    krb5_error_code krb5_kt_end_seq_get(
+        krb5_context context,
+        krb5_keytab keytab,
+        krb5_kt_cursor *cursor,
+    ) nogil
+
+    krb5_error_code krb5_kt_free_entry_generic(
+        krb5_context context,
+        krb5_keytab_entry *entry,
+    ) nogil
+
+    krb5_error_code krb5_kt_get_entry(
+        krb5_context context,
+        krb5_keytab keytab,
+        krb5_const_principal principal,
+        krb5_kvno vno,
+        krb5_enctype enctype,
+        krb5_keytab_entry *entry,
+    ) nogil
+
     krb5_error_code krb5_kt_get_name(
         krb5_context context,
         krb5_keytab keytab,
@@ -56,12 +153,39 @@ cdef extern from "python_krb5.h":
         unsigned int namelen,
     ) nogil
 
-    # See incline C code
+    # See inline C code
     krb5_error_code krb5_kt_get_type_generic(
         krb5_context context,
         krb5_keytab keytab,
         char **prefix,
         size_t prefixsize,
+    ) nogil
+
+    krb5_error_code krb5_kt_have_content(
+        krb5_context context,
+        krb5_keytab keytab,
+    ) nogil
+
+    krb5_error_code krb5_kt_next_entry(
+        krb5_context context,
+        krb5_keytab keytab,
+        krb5_keytab_entry *entry,
+        krb5_kt_cursor *cursor,
+    ) nogil
+
+    krb5_error_code krb5_kt_read_service_key(
+        krb5_context context,
+        krb5_pointer keyprocarg,
+        krb5_principal principal,
+        krb5_kvno vno,
+        krb5_enctype enctype,
+        krb5_keyblock **key,
+    ) nogil
+
+    krb5_error_code krb5_kt_remove_entry(
+        krb5_context context,
+        krb5_keytab id,
+        krb5_keytab_entry *entry
     ) nogil
 
     krb5_error_code krb5_kt_resolve(
@@ -70,7 +194,22 @@ cdef extern from "python_krb5.h":
         krb5_keytab *ktid,
     ) nogil
 
+    krb5_error_code krb5_kt_start_seq_get(
+        krb5_context context,
+        krb5_keytab keytab,
+        krb5_kt_cursor *cursor,
+    ) nogil
+
+    void pykrb5_keytab_entry_get(
+        krb5_keytab_entry *entry,
+        krb5_principal *principal,
+        krb5_timestamp *timestamp,
+        krb5_kvno *vno,
+        krb5_keyblock **key,
+    ) nogil
+
     krb5_error_code KRB5_CONFIG_NOTENUFSPACE
+    krb5_error_code KRB5_KT_END
     krb5_error_code KRB5_KT_NAME_TOOLONG
     krb5_error_code KRB5_KT_PREFIX_MAX_LEN
 
@@ -87,6 +226,31 @@ cdef class KeyTab:
         if self.raw:
             krb5_kt_close(self.ctx.raw, self.raw)
             self.raw = NULL
+
+    def __iter__(KeyTab self) -> typing.Iterator["KeyTabEntry"]:
+        cdef krb5_error_code err = 0
+        cdef krb5_kt_cursor cursor
+
+        err = krb5_kt_start_seq_get(self.ctx.raw, self.raw, &cursor)
+        if err:
+            raise Krb5Error(self.ctx, err)
+
+        try:
+            while True:
+                entry = KeyTabEntry(self.ctx)
+                err = krb5_kt_next_entry(self.ctx.raw, self.raw, &entry.raw, &cursor)
+                if err == KRB5_KT_END:
+                    break
+                elif err:
+                    raise Krb5Error(self.ctx, err)
+
+                entry.needs_free = 1
+                yield entry
+
+        finally:
+            err = krb5_kt_end_seq_get(self.ctx.raw, self.raw, &cursor)
+            if err:
+                raise Krb5Error(self.ctx, err)
 
     @property
     def addr(self) -> typing.Optional[int]:
@@ -129,6 +293,77 @@ cdef class KeyTab:
 
         else:
             return "NULL"
+
+
+cdef class KeyTabEntry:
+    # cdef Context ctx
+    # cdef krb5_keytab_entry raw
+    # cdef int needs_free
+
+    def __cinit__(KeyTabEntry self, Context context):
+        self.ctx = context
+        self.needs_free = 0
+
+    def __dealloc__(KeyTabEntry self):
+        if self.needs_free:
+            krb5_kt_free_entry_generic(self.ctx.raw, &self.raw)
+            self.needs_free = 0
+
+    def __repr__(KeyTabEntry self) -> str:
+        kwargs = [f"{k}={v}" for k, v in {
+            'principal': repr(self.principal),
+            'timestamp': self.timestamp,
+            'kvno': self.kvno,
+            'key': repr(self.key),
+        }.items()]
+
+        return f"KeyTabEntry({', '.join(kwargs)})"
+
+    def __str__(KeyTabEntry self) -> str:
+        return f"KVNO {self.kvno} {self.principal!s}"
+
+    @property
+    def key(KeyTabEntry self) -> KeyBlock:
+        kb = KeyBlock(self.ctx, needs_free=0)
+        pykrb5_keytab_entry_get(&self.raw, NULL, NULL, NULL, &kb.raw)
+
+        return kb
+
+    @property
+    def kvno(KeyTabEntry self) -> int:
+        cdef krb5_kvno kvno
+        pykrb5_keytab_entry_get(&self.raw, NULL, NULL, &kvno, NULL)
+
+        return kvno
+
+    @property
+    def principal(KeyTabEntry self) -> Principal:
+        principal = Principal(self.ctx, PrincipalParseFlags.none, needs_free=0)
+        pykrb5_keytab_entry_get(&self.raw, &principal.raw, NULL, NULL, NULL)
+
+        return principal
+
+    @property
+    def timestamp(KeyTabEntry self) -> int:
+        cdef krb5_timestamp timestamp
+        pykrb5_keytab_entry_get(&self.raw, NULL, &timestamp, NULL, NULL)
+
+        return timestamp
+
+
+def kt_add_entry(
+    Context context not None,
+    KeyTab keytab not None,
+    Principal principal not None,
+    krb5_kvno kvno,
+    uint32_t timestamp,
+    KeyBlock keyblock not None,
+) -> None:
+    cdef krb5_error_code err = 0
+
+    err = krb5_kt_add_entry_generic(context.raw, keytab.raw, principal.raw, kvno, timestamp, keyblock.raw)
+    if err:
+        raise Krb5Error(context, err)
 
 
 def kt_default(
@@ -176,6 +411,23 @@ def kt_default_name(
 
     finally:
         free(buffer)
+
+
+def kt_get_entry(
+    Context context not None,
+    KeyTab keytab not None,
+    Principal principal not None,
+    krb5_kvno kvno=0,
+    krb5_enctype enctype=0,
+) -> KeyTabEntry:
+    cdef KeyTabEntry entry = KeyTabEntry(context)
+    cdef krb5_error_code err = 0
+
+    err = krb5_kt_get_entry(context.raw, keytab.raw, principal.raw, kvno, enctype, &entry.raw)
+    if err:
+        raise Krb5Error(context, err)
+
+    return entry
 
 
 def kt_get_name(
@@ -243,6 +495,52 @@ def kt_get_type(
 
         finally:
             free(buffer)
+
+
+def kt_have_content(
+    Context context not None,
+    KeyTab keytab not None,
+) -> bool:
+    cdef krb5_error_code err = 0
+
+    err = krb5_kt_have_content(context.raw, keytab.raw)
+
+    return err == 0
+
+
+def kt_read_service_key(
+    Context context not None,
+    const unsigned char[:] name,
+    Principal principal not None,
+    krb5_kvno kvno = 0,
+    krb5_enctype enctype = 0,
+) -> KeyBlock:
+    kb = KeyBlock(context)
+
+    cdef krb5_error_code err = 0
+    cdef krb5_pointer name_ptr = NULL
+    if len(name):
+        name_ptr = <krb5_pointer>&name[0]
+    else:
+        raise ValueError("KeyTab must be set")
+
+    err = krb5_kt_read_service_key(context.raw, name_ptr, principal.raw, kvno, enctype, &kb.raw)
+    if err:
+        raise Krb5Error(context, err)
+
+    return kb
+
+
+def kt_remove_entry(
+    Context context not None,
+    KeyTab keytab not None,
+    KeyTabEntry entry not None,
+) -> None:
+    cdef krb5_error_code err = 0
+
+    err = krb5_kt_remove_entry(context.raw, keytab.raw, &entry.raw)
+    if err:
+        raise Krb5Error(context, err)
 
 
 def kt_resolve(

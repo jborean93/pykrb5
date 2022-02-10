@@ -14,6 +14,20 @@ from krb5._principal cimport Principal
 
 
 cdef extern from "python_krb5.h":
+    # Heimdal and MIT differ in their implementations
+    """
+    // The structures are different so cannot be explicitly defined in Cython. Use inline C to set the structs elements
+    // by name.
+    void pykrb5_set_krb5_data(
+        krb5_data *data,
+        size_t length,
+        char *value
+    )
+    {
+        data->length = length;
+        data->data = value;
+    }
+    """
     void krb5_free_cred_contents(
         krb5_context context,
         krb5_creds *val,
@@ -77,6 +91,12 @@ cdef extern from "python_krb5.h":
         krb5_context context,
         krb5_init_creds_context ctx,
         const char *password,
+    ) nogil
+
+    void pykrb5_set_krb5_data(
+        krb5_data *data,
+        size_t length,
+        char *value,
     ) nogil
 
 
@@ -159,8 +179,7 @@ cdef krb5_error_code prompt_callback(
             replies.append(reply)
 
         for idx, reply in enumerate(replies):
-            prompts[idx].reply.length = len(reply)
-            prompts[idx].reply.data = <char *>reply
+            pykrb5_set_krb5_data(prompts[idx].reply, len(reply), <char *>reply)
 
         return 0
 
