@@ -219,7 +219,6 @@ def test_cc_switch(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
     user_ccache = krb5.cc_resolve(ctx, b"DIR::" + bytes(tmp_path / "tkt-user"))
     krb5.cc_initialize(ctx, user_ccache, user_princ)
 
-    print(user_ccache.name)
     krb5.cc_switch(ctx, user_ccache)
 
     actual = krb5.cc_resolve(ctx, b"DIR:" + bytes(tmp_path))

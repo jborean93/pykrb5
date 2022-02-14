@@ -246,11 +246,14 @@ for e in [
     ("creds_opt_heimdal", "krb5_get_init_creds_opt_set_default_flags"),
     ("creds_opt_mit", "krb5_get_init_creds_opt_set_out_ccache"),
     "exceptions",
+    "keyblock",
     "kt",
     ("kt_mit", "krb5_kt_dup"),
     ("kt_heimdal", "krb5_kt_get_full_name"),
     "principal",
     ("principal_heimdal", "krb5_principal_get_realm"),
+    "string",
+    ("string_mit", "krb5_enctype_to_name"),
 ]:
     name = e
     canary = None
@@ -295,7 +298,7 @@ class sdist_krb5(sdist):
 
 setup(
     name="krb5",
-    version="0.2.0",
+    version="0.3.0",
     packages=find_packages(where="src"),
     package_data={
         "krb5": ["py.typed", "*.pyi"],

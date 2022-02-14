@@ -37,12 +37,19 @@ from krb5._creds_opt import (
     get_init_creds_opt_set_forwardable,
 )
 from krb5._exceptions import Krb5Error
+from krb5._keyblock import KeyBlock, init_keyblock
 from krb5._kt import (
     KeyTab,
+    KeyTabEntry,
+    kt_add_entry,
     kt_default,
     kt_default_name,
+    kt_get_entry,
     kt_get_name,
     kt_get_type,
+    kt_have_content,
+    kt_read_service_key,
+    kt_remove_entry,
     kt_resolve,
 )
 from krb5._principal import (
@@ -52,6 +59,7 @@ from krb5._principal import (
     parse_name_flags,
     unparse_name_flags,
 )
+from krb5._string import enctype_to_string, string_to_enctype
 
 __all__ = [
     "CCache",
@@ -59,7 +67,9 @@ __all__ = [
     "Creds",
     "GetInitCredsOpt",
     "InitCredsContext",
+    "KeyBlock",
     "KeyTab",
+    "KeyTabEntry",
     "Krb5Error",
     "Krb5Prompt",
     "Principal",
@@ -78,6 +88,7 @@ __all__ = [
     "cc_store_cred",
     "cc_support_switch",
     "cc_switch",
+    "enctype_to_string",
     "get_default_realm",
     "get_init_creds_keytab",
     "get_init_creds_opt_alloc",
@@ -90,13 +101,20 @@ __all__ = [
     "init_creds_init",
     "init_creds_set_keytab",
     "init_creds_set_password",
+    "init_keyblock",
+    "kt_add_entry",
     "kt_default",
     "kt_default_name",
+    "kt_get_entry",
     "kt_get_name",
     "kt_get_type",
+    "kt_have_content",
+    "kt_read_service_key",
+    "kt_remove_entry",
     "kt_resolve",
     "parse_name_flags",
     "set_default_realm",
+    "string_to_enctype",
     "unparse_name_flags",
 ]
 
@@ -163,3 +181,11 @@ except ImportError:
     pass
 else:
     __all__.extend(["principal_get_realm"])
+
+
+try:
+    from krb5._string_mit import enctype_to_name
+except ImportError:
+    pass
+else:
+    __all__.append("enctype_to_name")

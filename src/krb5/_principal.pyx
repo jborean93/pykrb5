@@ -85,15 +85,17 @@ cdef class Principal:
     """
     # cdef Context ctx
     # cdef krb5_principal raw
+    # cdef int needs_free
     # cdef int _parse_flags
 
-    def __cinit__(Principal self, Context context, flags):
+    def __cinit__(Principal self, Context context, flags, int needs_free=1):
         self.ctx = context
         self.raw = NULL
+        self.needs_free = needs_free
         self._parse_flags = flags
 
     def __dealloc__(Principal self):
-        if self.raw:
+        if self.raw and self.needs_free:
             krb5_free_principal(self.ctx.raw, self.raw)
             self.raw = NULL
 
