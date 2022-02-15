@@ -9,19 +9,19 @@ from krb5._context import Context
 class PrincipalParseFlags(enum.IntEnum):
     """Flags used to control :meth:`parse_name_flags`."""
 
-    none = ...  #: No parse flags set
-    no_realm = ...  #: Error if realm is present
-    require_realm = ...  #: Error if realm is not present
-    enterprise = ...  #: Create single-component enterprise principal
-    ignore_realm = ...  #: Ignore realm if present
+    none: PrincipalParseFlags = ...  #: No parse flags set
+    no_realm: PrincipalParseFlags = ...  #: Error if realm is present
+    require_realm: PrincipalParseFlags = ...  #: Error if realm is not present
+    enterprise: PrincipalParseFlags = ...  #: Create single-component enterprise principal
+    ignore_realm: PrincipalParseFlags = ...  #: Ignore realm if present
 
 class PrincipalUnparseFlags(enum.IntEnum):
     """Flags used to control :meth:`unparse_name_flags`."""
 
-    none = ...  #: No unparse flags set
-    short = ...  #: Omit realm if it is the local realm
-    no_realm = ...  #: Omit realm always
-    display = ...  #: Don't escape special characters
+    none: PrincipalUnparseFlags = ...  #: No unparse flags set
+    short: PrincipalUnparseFlags = ...  #: Omit realm if it is the local realm
+    no_realm: PrincipalUnparseFlags = ...  #: Omit realm always
+    display: PrincipalUnparseFlags = ...  #: Don't escape special characters
 
 class Principal:
     """Kerberos Principal object.
@@ -32,6 +32,8 @@ class Principal:
         context: Krb5 context.
     """
 
+    def __copy__(self) -> "Principal":
+        """Create a copy of the principal object."""
     @property
     def addr(self) -> typing.Optional[int]:
         """The raw krb5_principal pointer address of this credential cache."""
@@ -39,10 +41,26 @@ class Principal:
     def name(self) -> typing.Optional[bytes]:
         """The name of the principal."""
 
+def copy_principal(
+    context: Context,
+    principal: Principal,
+) -> Principal:
+    """Copy a principal.
+
+    Creates a copy of the principal specified.
+
+    Args:
+        context: Krb5 context.
+        principal: The principal to copy.
+
+    Returns:
+        Principal: The copy of the principal.
+    """
+
 def parse_name_flags(
     context: Context,
     name: bytes,
-    flags: PrincipalParseFlags = PrincipalParseFlags.none,
+    flags: typing.Union[int, PrincipalParseFlags] = PrincipalParseFlags.none,
 ) -> Principal:
     """Create a Kerberos principal.
 
@@ -60,7 +78,7 @@ def parse_name_flags(
 def unparse_name_flags(
     context: Context,
     principal: Principal,
-    flags: PrincipalUnparseFlags = PrincipalUnparseFlags.none,
+    flags: typing.Union[int, PrincipalUnparseFlags] = PrincipalUnparseFlags.none,
 ) -> bytes:
     """Get the Kerberos principal name.
 

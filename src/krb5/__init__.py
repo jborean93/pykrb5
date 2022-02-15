@@ -3,7 +3,6 @@
 
 from krb5._ccache import (
     CCache,
-    cc_cache_match,
     cc_default,
     cc_default_name,
     cc_destroy,
@@ -13,10 +12,11 @@ from krb5._ccache import (
     cc_initialize,
     cc_new_unique,
     cc_resolve,
+    cc_set_default_name,
     cc_store_cred,
-    cc_support_switch,
     cc_switch,
 )
+from krb5._cccol import cccol_iter
 from krb5._context import Context, get_default_realm, init_context, set_default_realm
 from krb5._creds import (
     Creds,
@@ -33,8 +33,14 @@ from krb5._creds import (
 from krb5._creds_opt import (
     GetInitCredsOpt,
     get_init_creds_opt_alloc,
+    get_init_creds_opt_set_anonymous,
     get_init_creds_opt_set_canonicalize,
+    get_init_creds_opt_set_etype_list,
     get_init_creds_opt_set_forwardable,
+    get_init_creds_opt_set_proxiable,
+    get_init_creds_opt_set_renew_life,
+    get_init_creds_opt_set_salt,
+    get_init_creds_opt_set_tkt_life,
 )
 from krb5._exceptions import Krb5Error
 from krb5._keyblock import KeyBlock, init_keyblock
@@ -47,7 +53,6 @@ from krb5._kt import (
     kt_get_entry,
     kt_get_name,
     kt_get_type,
-    kt_have_content,
     kt_read_service_key,
     kt_remove_entry,
     kt_resolve,
@@ -56,6 +61,7 @@ from krb5._principal import (
     Principal,
     PrincipalParseFlags,
     PrincipalUnparseFlags,
+    copy_principal,
     parse_name_flags,
     unparse_name_flags,
 )
@@ -75,7 +81,6 @@ __all__ = [
     "Principal",
     "PrincipalParseFlags",
     "PrincipalUnparseFlags",
-    "cc_cache_match",
     "cc_default",
     "cc_default_name",
     "cc_destroy",
@@ -85,15 +90,23 @@ __all__ = [
     "cc_initialize",
     "cc_new_unique",
     "cc_resolve",
+    "cc_set_default_name",
     "cc_store_cred",
-    "cc_support_switch",
     "cc_switch",
+    "cccol_iter",
+    "copy_principal",
     "enctype_to_string",
     "get_default_realm",
     "get_init_creds_keytab",
     "get_init_creds_opt_alloc",
+    "get_init_creds_opt_set_anonymous",
     "get_init_creds_opt_set_canonicalize",
+    "get_init_creds_opt_set_etype_list",
     "get_init_creds_opt_set_forwardable",
+    "get_init_creds_opt_set_proxiable",
+    "get_init_creds_opt_set_renew_life",
+    "get_init_creds_opt_set_salt",
+    "get_init_creds_opt_set_tkt_life",
     "get_init_creds_password",
     "init_context",
     "init_creds_get",
@@ -108,7 +121,6 @@ __all__ = [
     "kt_get_entry",
     "kt_get_name",
     "kt_get_type",
-    "kt_have_content",
     "kt_read_service_key",
     "kt_remove_entry",
     "kt_resolve",
@@ -118,7 +130,7 @@ __all__ = [
     "unparse_name_flags",
 ]
 
-# Provider specific APIs
+# Provider or version specific APIs
 try:
     from krb5._ccache_mit import cc_dup
 except ImportError:
@@ -126,6 +138,20 @@ except ImportError:
 else:
     __all__.append("cc_dup")
 
+
+try:
+    from krb5._ccache_match import cc_cache_match
+except ImportError:
+    pass
+else:
+    __all__.append("cc_cache_match")
+
+try:
+    from krb5._ccache_support_switch import cc_support_switch
+except ImportError:
+    pass
+else:
+    __all__.append("cc_support_switch")
 
 try:
     from krb5._context_mit import init_secure_context
@@ -144,11 +170,43 @@ else:
 
 
 try:
-    from krb5._creds_opt_mit import get_init_creds_opt_set_out_ccache
+    from krb5._creds_opt_mit import (
+        FastFlags,
+        get_init_creds_opt_set_fast_ccache,
+        get_init_creds_opt_set_fast_ccache_name,
+        get_init_creds_opt_set_fast_flags,
+        get_init_creds_opt_set_out_ccache,
+        get_init_creds_opt_set_pa,
+    )
 except ImportError:
     pass
 else:
-    __all__.append("get_init_creds_opt_set_out_ccache")
+    __all__.extend(
+        [
+            "FastFlags",
+            "get_init_creds_opt_set_fast_ccache",
+            "get_init_creds_opt_set_fast_ccache_name",
+            "get_init_creds_opt_set_fast_flags",
+            "get_init_creds_opt_set_out_ccache",
+            "get_init_creds_opt_set_pa",
+        ]
+    )
+
+
+try:
+    from krb5._creds_opt_set_in_ccache import get_init_creds_opt_set_in_ccache
+except ImportError:
+    pass
+else:
+    __all__.append("get_init_creds_opt_set_in_ccache")
+
+
+try:
+    from krb5._creds_opt_set_pac_request import get_init_creds_opt_set_pac_request
+except ImportError:
+    pass
+else:
+    __all__.append("get_init_creds_opt_set_pac_request")
 
 
 try:
@@ -173,6 +231,14 @@ except ImportError:
     pass
 else:
     __all__.extend(["kt_get_full_name", "kt_get_type"])
+
+
+try:
+    from krb5._kt_have_content import kt_have_content
+except ImportError:
+    pass
+else:
+    __all__.append("kt_have_content")
 
 
 try:

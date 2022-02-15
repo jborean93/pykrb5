@@ -25,6 +25,12 @@ cdef extern from "python_krb5.h":
     }
     """
 
+    krb5_error_code krb5_copy_principal(
+        krb5_context context,
+        krb5_const_principal inprinc,
+        krb5_principal *outprinc,
+    ) nogil
+
     void krb5_free_principal(
         krb5_context context,
         krb5_principal val,
@@ -94,6 +100,9 @@ cdef class Principal:
         self.needs_free = needs_free
         self._parse_flags = flags
 
+    def __copy__(Principal self):
+        return copy_principal(self.ctx, self)
+
     def __dealloc__(Principal self):
         if self.raw and self.needs_free:
             krb5_free_principal(self.ctx.raw, self.raw)
@@ -126,13 +135,26 @@ cdef class Principal:
         return name.decode('utf-8') if name else 'NULL'
 
 
+def copy_principal(
+    Context context not None,
+    Principal principal not None,
+) -> Principal:
+    out = Principal(context, principal._parse_flags)
+    cdef krb5_error_code err = 0
+
+    err = krb5_copy_principal(context.raw, principal.raw, &out.raw)
+    if err:
+        raise Krb5Error(context, err)
+
+    return out
+
+
 def parse_name_flags(
     Context context not None,
     const unsigned char[:] name not None,
-    flags: PrincipalParseFlags = PrincipalParseFlags.none,
+    int flags=PrincipalParseFlags.none,
 ) -> Principal:
     principal = Principal(context, flags)
-    cdef int raw_flags = flags.value
     cdef krb5_error_code err = 0
 
     cdef const char *name_ptr = NULL
@@ -141,7 +163,7 @@ def parse_name_flags(
     else:
         raise ValueError("Principal must be set")
 
-    err = krb5_parse_name_flags(context.raw, name_ptr, raw_flags, &principal.raw)
+    err = krb5_parse_name_flags(context.raw, name_ptr, flags, &principal.raw)
     if err:
         raise Krb5Error(context, err)
 
@@ -151,13 +173,12 @@ def parse_name_flags(
 def unparse_name_flags(
     Context context not None,
     Principal principal not None,
-    flags: PrincipalUnparseFlags = PrincipalUnparseFlags.none,
+    int flags=PrincipalUnparseFlags.none,
 ) -> bytes:
     cdef krb5_error_code err = 0
-    cdef int raw_flags = flags.value
     cdef char *name = NULL
 
-    err = krb5_unparse_name_flags(context.raw, principal.raw, raw_flags, &name)
+    err = krb5_unparse_name_flags(context.raw, principal.raw, flags, &name)
     if err:
         raise Krb5Error(context, err)
 

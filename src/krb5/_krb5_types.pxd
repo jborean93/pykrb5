@@ -5,6 +5,20 @@ from libc.stdint cimport int32_t, uint8_t, uint32_t
 
 
 cdef extern from "python_krb5.h":
+    """
+    // The structures are different so cannot be explicitly defined in Cython. Use inline C to set the structs elements
+    // by name.
+    void pykrb5_set_krb5_data(
+        krb5_data *data,
+        size_t length,
+        char *value
+    )
+    {
+        data->length = length;
+        data->data = value;
+    }
+    """
+
     ctypedef int32_t krb5_int32
     ctypedef krb5_int32 krb5_error_code
     ctypedef krb5_int32 krb5_deltat
@@ -15,11 +29,16 @@ cdef extern from "python_krb5.h":
     ctypedef unsigned int krb5_kvno
 
     ctypedef void *krb5_pointer;
+    ctypedef krb5_pointer krb5_cc_cursor
     ctypedef krb5_pointer krb5_kt_cursor;
 
     cdef struct _krb5_context:
         pass
     ctypedef _krb5_context *krb5_context
+
+    cdef struct _krb5_cccol_cursor:
+        pass
+    ctypedef _krb5_cccol_cursor *krb5_cccol_cursor
 
     cdef struct krb5_principal_data:
         pass
@@ -72,3 +91,9 @@ cdef extern from "python_krb5.h":
         int num_prompts,
         krb5_prompt prompts[],
     )
+
+    void pykrb5_set_krb5_data(
+        krb5_data *data,
+        size_t length,
+        char *value,
+    ) nogil

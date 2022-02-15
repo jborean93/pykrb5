@@ -1,6 +1,7 @@
 # Copyright: (c) 2021 Jordan Borean (@jborean93) <jborean93@gmail.com>
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
+import copy
 import pathlib
 
 import k5test
@@ -55,25 +56,6 @@ def test_kt_get_type(tmp_path: pathlib.Path) -> None:
     assert krb5.kt_get_type(ctx, kt) == b"FILE"
 
 
-def test_kt_have_content(tmp_path: pathlib.Path) -> None:
-    ctx = krb5.init_context()
-
-    kt = krb5.kt_resolve(ctx, f"FILE:{tmp_path / 'keytab'}".encode())
-
-    assert krb5.kt_have_content(ctx, kt) is False
-
-    princ = krb5.parse_name_flags(ctx, b"user@DOMAIN.COM")
-    key_block = krb5.init_keyblock(ctx, 17, b"\x00" * 16)
-    krb5.kt_add_entry(ctx, kt, princ, 1, 0, key_block)
-
-    assert krb5.kt_have_content(ctx, kt)
-
-    entry = list(kt)[0]
-    krb5.kt_remove_entry(ctx, kt, entry)
-
-    assert krb5.kt_have_content(ctx, kt) is False
-
-
 def test_kt_enumerate(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
     ctx = krb5.init_context()
     kt = krb5.kt_resolve(ctx, f"FILE:{tmp_path / 'keytab'}".encode())
@@ -91,11 +73,17 @@ def test_kt_enumerate(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
     assert entries[0].principal.name == b"user@DOMAIN.COM"
     assert entries[0].kvno == 1
     assert isinstance(entries[0].timestamp, int)
+    copied_princ = copy.copy(entries[0].principal)
 
     krb5.kt_remove_entry(ctx, kt, entries[0])
+    del entries[0]
 
     entries = list(kt)
     assert entries == []
+
+    # Tests that the copied principal outlives the kt/entry
+    del kt
+    assert copied_princ.name == b"user@DOMAIN.COM"
 
 
 def test_kt_get_entry_empty(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
@@ -287,3 +275,23 @@ def test_kt_dup(tmp_path: pathlib.Path) -> None:
     assert copied_kt.kt_type == b"FILE"
     assert copied_kt.name == kt_name
     assert copied_kt.addr != kt_addr
+
+
+@pytest.mark.requires_api("kt_have_content")
+def test_kt_have_content(tmp_path: pathlib.Path) -> None:
+    ctx = krb5.init_context()
+
+    kt = krb5.kt_resolve(ctx, f"FILE:{tmp_path / 'keytab'}".encode())
+
+    assert krb5.kt_have_content(ctx, kt) is False
+
+    princ = krb5.parse_name_flags(ctx, b"user@DOMAIN.COM")
+    key_block = krb5.init_keyblock(ctx, 17, b"\x00" * 16)
+    krb5.kt_add_entry(ctx, kt, princ, 1, 0, key_block)
+
+    assert krb5.kt_have_content(ctx, kt)
+
+    entry = list(kt)[0]
+    krb5.kt_remove_entry(ctx, kt, entry)
+
+    assert krb5.kt_have_content(ctx, kt) is False
