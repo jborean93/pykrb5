@@ -1,6 +1,10 @@
 # Copyright: (c) 2021 Jordan Borean (@jborean93) <jborean93@gmail.com>
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
+import typing
+
+from libc.stdlib cimport free, malloc
+
 from krb5._exceptions import Krb5Error
 
 from krb5._context cimport Context
@@ -27,6 +31,11 @@ cdef extern from "python_krb5.h":
         krb5_get_init_creds_opt **opt,
     ) nogil
 
+    void krb5_get_init_creds_opt_set_anonymous(
+        krb5_get_init_creds_opt *opt,
+        int anonymous,
+    ) nogil
+
     void krb5_get_init_creds_opt_free(
         krb5_context context,
         krb5_get_init_creds_opt *opt,
@@ -38,9 +47,35 @@ cdef extern from "python_krb5.h":
         int canonicalize,
     ) nogil
 
+    void krb5_get_init_creds_opt_set_etype_list(
+        krb5_get_init_creds_opt *opt,
+        krb5_enctype *etype_list,
+        int etype_list_length,
+    ) nogil
+
     void krb5_get_init_creds_opt_set_forwardable(
         krb5_get_init_creds_opt *opt,
         int forwardable,
+    ) nogil
+
+    void krb5_get_init_creds_opt_set_proxiable(
+        krb5_get_init_creds_opt *opt,
+        int proxiable,
+    ) nogil
+
+    void krb5_get_init_creds_opt_set_renew_life(
+        krb5_get_init_creds_opt *opt,
+        krb5_deltat renew_life,
+    ) nogil
+
+    void krb5_get_init_creds_opt_set_salt(
+        krb5_get_init_creds_opt *opt,
+        krb5_data *salt,
+    ) nogil
+
+    void krb5_get_init_creds_opt_set_tkt_life(
+        krb5_get_init_creds_opt *opt,
+        krb5_deltat tkt_life,
     ) nogil
 
 
@@ -74,6 +109,15 @@ def get_init_creds_opt_alloc(
     return opt
 
 
+def get_init_creds_opt_set_anonymous(
+    GetInitCredsOpt opt not None,
+    anonymous: bool,
+) -> None:
+    cdef int value = 1 if anonymous else 0
+
+    krb5_get_init_creds_opt_set_anonymous(opt.raw, value)
+
+
 def get_init_creds_opt_set_canonicalize(
     GetInitCredsOpt opt not None,
     canonicalize: bool,
@@ -83,6 +127,21 @@ def get_init_creds_opt_set_canonicalize(
     krb5_get_init_creds_opt_set_canonicalize_generic(opt.ctx.raw, opt.raw, value)
 
 
+def get_init_creds_opt_set_etype_list(
+    GetInitCredsOpt opt not None,
+    etypes: typing.Iterable[int],
+) -> None:
+    tmp = list(etypes)
+    cdef krb5_enctype *buffer = <krb5_enctype *>malloc(len(etypes) * sizeof(krb5_enctype))
+    if not buffer:
+        raise MemoryError()
+
+    for idx, e in enumerate(tmp):
+        buffer[idx] = tmp[idx]
+
+    krb5_get_init_creds_opt_set_etype_list(opt.raw, buffer, len(etypes))
+
+
 def get_init_creds_opt_set_forwardable(
     GetInitCredsOpt opt not None,
     forwardable: bool,
@@ -90,3 +149,38 @@ def get_init_creds_opt_set_forwardable(
     cdef int value = 1 if forwardable else 0
 
     krb5_get_init_creds_opt_set_forwardable(opt.raw, value)
+
+
+def get_init_creds_opt_set_proxiable(
+    GetInitCredsOpt opt not None,
+    proxiable: bool,
+) -> None:
+    cdef int value = 1 if proxiable else 0
+
+    krb5_get_init_creds_opt_set_proxiable(opt.raw, value)
+
+
+def get_init_creds_opt_set_renew_life(
+    GetInitCredsOpt opt not None,
+    krb5_deltat renew_life,
+) -> None:
+    krb5_get_init_creds_opt_set_renew_life(opt.raw, renew_life)
+
+
+def get_init_creds_opt_set_salt(
+    GetInitCredsOpt opt not None,
+    const unsigned char[:] salt not None,
+) -> None:
+    if not len(salt):
+        raise ValueError("salt cannot be an empty byte string")
+
+    cdef krb5_data buffer
+    pykrb5_set_krb5_data(&buffer, len(salt), <char *>&salt[0])
+    krb5_get_init_creds_opt_set_salt(opt.raw, &buffer)
+
+
+def get_init_creds_opt_set_tkt_life(
+    GetInitCredsOpt opt not None,
+    krb5_deltat tkt_life,
+) -> None:
+    krb5_get_init_creds_opt_set_tkt_life(opt.raw, tkt_life)

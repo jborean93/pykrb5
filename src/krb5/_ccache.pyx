@@ -15,12 +15,6 @@ from krb5._principal cimport Principal
 
 
 cdef extern from "python_krb5.h":
-    krb5_error_code krb5_cc_cache_match(
-        krb5_context context,
-        krb5_principal client,
-        krb5_ccache *cache_out,
-    ) nogil
-
     krb5_error_code krb5_cc_close(
         krb5_context context,
         krb5_ccache cache,
@@ -38,6 +32,12 @@ cdef extern from "python_krb5.h":
     krb5_error_code krb5_cc_destroy(
         krb5_context context,
         krb5_ccache cache,
+    ) nogil
+
+    krb5_error_code krb5_cc_end_seq_get(
+        krb5_context context,
+        krb5_ccache cache,
+        krb5_cc_cursor *cursor,
     ) nogil
 
     krb5_error_code krb5_cc_initialize(
@@ -69,10 +69,22 @@ cdef extern from "python_krb5.h":
         krb5_ccache *id,
     ) nogil
 
+    krb5_error_code krb5_cc_next_cred(
+        krb5_context context,
+        krb5_ccache cache,
+        krb5_cc_cursor *cursor,
+        krb5_creds *cred,
+    ) nogil
+
     krb5_error_code krb5_cc_resolve(
         krb5_context context,
         const char *name,
         krb5_ccache *cache,
+    ) nogil
+
+    krb5_error_code krb5_cc_set_default_name(
+        krb5_context context,
+        const char *name,
     ) nogil
 
     krb5_error_code krb5_cc_store_cred(
@@ -81,9 +93,10 @@ cdef extern from "python_krb5.h":
         krb5_creds *creds,
     ) nogil
 
-    krb5_boolean krb5_cc_support_switch(
+    krb5_error_code krb5_cc_start_seq_get(
         krb5_context context,
-        const char *type,
+        krb5_ccache cache,
+        krb5_cc_cursor *cursor,
     ) nogil
 
     krb5_error_code krb5_cc_switch(
@@ -104,6 +117,32 @@ cdef class CCache:
         if self.raw:
             krb5_cc_close(self.ctx.raw, self.raw)
             self.raw = NULL
+
+    def __iter__(CCache self) -> typing.Iterator[Creds]:
+        cdef krb5_error_code err = 0
+        cdef krb5_cc_cursor cursor
+
+        if self.raw == NULL:
+            return
+
+        err = krb5_cc_start_seq_get(self.ctx.raw, self.raw, &cursor)
+        if err:
+            raise Krb5Error(self.ctx, err)
+
+        try:
+            while True:
+                creds = Creds(self.ctx)
+                err = krb5_cc_next_cred(self.ctx.raw, self.raw, &cursor, &creds.raw)
+                if err:
+                    break
+
+                creds.needs_free = 1
+                yield creds
+
+        finally:
+            err = krb5_cc_end_seq_get(self.ctx.raw, self.raw, &cursor)
+            if err:
+                raise Krb5Error(self.ctx, err)
 
     @property
     def addr(self) -> typing.Optional[int]:
@@ -143,20 +182,6 @@ cdef class CCache:
 
         else:
             return "NULL"
-
-
-def cc_cache_match(
-    Context context not None,
-    Principal principal not None,
-) -> CCache:
-    ccache = CCache(context)
-    cdef krb5_error_code err = 0
-
-    err = krb5_cc_cache_match(context.raw, principal.raw, &ccache.raw)
-    if err:
-        raise Krb5Error(context, err)
-
-    return ccache
 
 
 def cc_default(
@@ -273,6 +298,21 @@ def cc_resolve(
     return ccache
 
 
+def cc_set_default_name(
+    Context context not None,
+    const unsigned char[:] name,
+) -> None:
+    cdef krb5_error_code err = 0
+
+    cdef const char *name_ptr = NULL
+    if name is not None and len(name):
+        name_ptr = <const char *>&name[0]
+
+    err = krb5_cc_set_default_name(context.raw, name_ptr)
+    if err:
+        raise Krb5Error(context, err)
+
+
 def cc_store_cred(
     Context context not None,
     CCache cache not None,
@@ -283,19 +323,6 @@ def cc_store_cred(
     err = krb5_cc_store_cred(context.raw, cache.raw, &creds.raw)
     if err:
         raise Krb5Error(context, err)
-
-
-def cc_support_switch(
-    Context context not None,
-    const unsigned char[:] cache_type not None,
-) -> bool:
-    cdef const char *type_ptr = NULL
-    if len(cache_type):
-        type_ptr = <const char*>&cache_type[0]
-    else:
-        raise ValueError("cache_type cannot be an empty byte string")
-
-    return bool(krb5_cc_support_switch(context.raw, type_ptr))
 
 
 def cc_switch(

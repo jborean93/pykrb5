@@ -42,11 +42,8 @@ class KeyTabEntry:
         When using a key tab entry from enumerating a :class:`KeyTab`, the
         key and principal value is tied to the lifetime of the entry. Attempting
         to use either of these after the entry is out of scope and has been
-        freed will crash the process.
-
-    Args:
-        context:
-        keytab:
+        freed will crash the process. The principal can be copied with
+        `copy(entry.principal)` to ensure it outlives the entry context.
     """
 
     @property
@@ -172,22 +169,6 @@ def kt_get_type(
 
     Returns:
         bytes: The type of the keytab.
-    """
-
-def kt_have_content(
-    context: Context,
-    keytab: KeyTab,
-) -> bool:
-    """Check if a keytab exists and contains entries.
-
-    Checks if the keytab passed in exists and contains entries.
-
-    Args:
-        context: Krb5 context.
-        keytab: They keytab to query.
-
-    Returns:
-        bool: Whether the keytab exists and contains entries.
     """
 
 def kt_read_service_key(

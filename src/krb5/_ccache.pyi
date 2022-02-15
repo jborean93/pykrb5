@@ -16,6 +16,8 @@ class CCache:
         context: Krb5 context.
     """
 
+    def __iter__(self) -> typing.Iterator[Creds]:
+        """Iterate credentials in a ccache."""
     @property
     def addr(self) -> typing.Optional[int]:
         """The raw krb5_ccache pointer address of this credential cache."""
@@ -28,23 +30,6 @@ class CCache:
     @property
     def cache_type(self) -> typing.Optional[bytes]:
         """The type of the credential cache."""
-
-def cc_cache_match(
-    context: Context,
-    principal: Principal,
-) -> CCache:
-    """Find a credential cache for the specified principal.
-
-    Find a cache within the collection whose default principal is the same as
-    the one specified.
-
-    Args:
-        context: Krb5 context.
-        principal: The principal to find in the collection cache.
-
-    Returns:
-        CCache: The opened credential cache for the principal specified.
-    """
 
 def cc_default(
     context: Context,
@@ -192,6 +177,23 @@ def cc_resolve(
         CCache: The credential cache that was resolved.
     """
 
+def cc_set_default_name(
+    context: Context,
+    name: typing.Optional[bytes],
+) -> None:
+    """Set the default ccache name.
+
+    Set the default credential cache name to the name specified for future
+    operations using the context. If name is `None` or an empty byte string
+    this will clear any previous application-set default name and forget any
+    cached value of the default name for the context.
+
+    Args:
+        context: Krb5 context.
+        name: The default credential name or `None` to reset back to the config
+            defaults.
+    """
+
 def cc_store_cred(
     context: Context,
     cache: CCache,
@@ -205,24 +207,6 @@ def cc_store_cred(
         context: Krb5 context.
         cache: The credential cache to store the creds into.
         creds: The credentials to store.
-    """
-
-def cc_support_switch(
-    context: Context,
-    cache_type: bytes,
-) -> bool:
-    """Check whether the cache type supports switching.
-
-    Checks whether the credential cache type specified supports switching the
-    primary cache in its colleciton using :meth:`cc_switch`.
-
-    Args:
-        context: Krb5 context.
-        cache_type: The credential cache type, like ``FILE``, ``DIR``, etc to
-            check whether it supports switching or not.
-
-    Returns:
-        bool: The cache type supports switching.
     """
 
 def cc_switch(
