@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 - TBD
+## 0.3.0 - 2022-02-16
 
 * Added CCache APIs:
   * [krb5_cc_set_default_name](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_cc_set_default_name.html)
