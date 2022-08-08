@@ -1,9 +1,7 @@
-Cython
-black
-isort
+black==22.6.0
+isort==5.10.1
 k5test>=0.10.0
-mypy
+mypy==0.971
 pre-commit
 pytest
 tox
-wheel

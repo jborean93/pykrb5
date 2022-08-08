@@ -47,16 +47,15 @@ lib::setup::python_requirements() {
         echo "::group::Installing Python Requirements"
     fi
 
-    python -m pip install --upgrade pip setuptools wheel
-
     echo "Installing krb5"
-    python -m pip install krb5 \
-        --no-index \
+
+    # Getting the version is important so that pip prioritises our local dist
+    python -m pip install build
+    KRB5_VERSION="$( python -c "import build.util; print(build.util.project_wheel_metadata('.').get('Version'))" )"
+
+    python -m pip install krb5=="${KRB5_VERSION}" \
         --find-links "file:///${PWD}/dist" \
-        --no-build-isolation \
-        --no-dependencies \
         --verbose
-    python -m pip install krb5
 
     echo "Installing dev dependencies"
     python -m pip install -r requirements-dev.txt
