@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 - TBD
+
+* Require Python 3.7 or newer (dropped 3.6)
+* Created PEP 517 compliant package
+* Moved all setuptools configuration, except extension information, to `pyproject.toml`
+* Will no longer include the cythonised `.c` files in the sdist making Cython a build requirement
+  * With PEP 517 this requirement will be automatically satisfied making this a non-breaking change for people using PEP 517 features
+
 ## 0.3.0 - 2022-02-16
 
 * Added CCache APIs:

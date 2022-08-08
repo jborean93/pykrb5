@@ -1,4 +1,3 @@
-include __dont_use_cython__.txt
 include CHANGELOG.md
 include LICENSE
 exclude .coverage
@@ -8,6 +7,7 @@ recursive-include build_helpers *
 include src/krb5/*.h
 include src/krb5/*.pyx
 include src/krb5/*.pxd
+exclude src/krb5/*.c
 recursive-include stubs *
 recursive-include tests *
 recursive-exclude tests *.pyc
