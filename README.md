@@ -29,8 +29,8 @@ To install from source run the following:
 
 ```bash
 git clone https://github.com/jborean93/pykrb5.git
-pip install Cython
-python setup.py bdist_wheel
+python -m pip install build
+python -m build
 pip install dist/krb5-*.whl
 ```
 
@@ -69,7 +69,10 @@ git clone https://github.com/jborean93/pykrb5.git
 pip install -r requirements-dev.txt
 pre-commit install
 
-python setup.py build_ext --inplace
+python -m pip install -e .
+
+# Can compile the krb5 extensions on an adhoc basis
+# python setup.py build_ext --inplace
 ```
 
 From there an editor like VSCode can be used to make changes and run the test suite.
