@@ -117,6 +117,8 @@ jobs:
         exclude:
         - os: macOS-12
           provider: mit
+        - os: macOS-12
+          python-version: '3.11'  # https://github.com/actions/setup-python/issues/531
 
     steps:
     - uses: actions/checkout@v3
