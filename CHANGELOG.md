@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 - 2022-10-25
+
+* Added Python 3.11 wheel
+
 ## 0.4.0 - 2022-08-09
 
 * Require Python 3.7 or newer (dropped 3.6)
