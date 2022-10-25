@@ -176,10 +176,16 @@ if not SKIP_EXTENSIONS:
 
         compile_args.append("-Werror")
 
-        # Python 3.8 on macOS errors on these deprecation warnings. We ignore them as things are fixed on 3.9 but the
-        # code still needs to compile on 3.8.
-        if sys.platform == "darwin" and sys.version_info[:2] == (3, 8):
-            compile_args.append("-Wno-deprecated")
+        if sys.platform == "darwin":
+            # Clang on macOS emits these warnings for typed memoryviews
+            # https://github.com/cython/cython/issues/5041
+            compile_args.append("-Wunreachable-code-fallthrough")
+
+            # Python 3.8 on macOS errors on these deprecation warnings. We
+            # ignore them as things are fixed on 3.9 but the code still needs
+            # to compile on 3.8.
+            if sys.version_info[:2] == (3, 8):
+                compile_args.append("-Wno-deprecated")
 
         if CYTHON_LINETRACE:
             compile_args.append("-DCYTHON_TRACE_NOGIL=1")

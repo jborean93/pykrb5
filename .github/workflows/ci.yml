@@ -25,9 +25,9 @@ jobs:
     name: build sdist
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.9
 
@@ -38,7 +38,7 @@ jobs:
       env:
         KRB5_SKIP_EXTENSIONS: true
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: artifact
         path: ./dist/*.tar.gz
@@ -62,9 +62,11 @@ jobs:
         - cp39-macosx_arm64
         - cp310-macosx_x86_64
         - cp310-macosx_arm64
+        - cp311-macosx_x86_64
+        - cp311-macosx_arm64
 
     steps:
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: artifact
         path: ./
@@ -77,7 +79,7 @@ jobs:
         rm krb5-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v2.1.1
+      uses: pypa/cibuildwheel@v2.11.1
       env:
         CIBW_ARCHS: all
         CIBW_TEST_SKIP: '*_arm64'
@@ -107,6 +109,7 @@ jobs:
         - 3.8
         - 3.9
         - '3.10'
+        - '3.11'
         provider:
         - mit
         - heimdal
@@ -116,13 +119,13 @@ jobs:
           provider: mit
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: artifact
         path: ./dist
@@ -135,7 +138,7 @@ jobs:
 
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Unit Test Results (${{ matrix.os }} ${{ matrix.provider }} ${{ matrix.python-version }})
         path: ./junit/test-results.xml
@@ -147,9 +150,9 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
 
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: artifact
         path: ./dist
