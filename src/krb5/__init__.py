@@ -57,6 +57,7 @@ from krb5._kt import (
     kt_remove_entry,
     kt_resolve,
 )
+from krb5._localauth import aname_to_localname
 from krb5._principal import (
     Principal,
     PrincipalParseFlags,
@@ -81,6 +82,7 @@ __all__ = [
     "Principal",
     "PrincipalParseFlags",
     "PrincipalUnparseFlags",
+    "aname_to_localname",
     "cc_default",
     "cc_default_name",
     "cc_destroy",

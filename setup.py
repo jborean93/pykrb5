@@ -235,6 +235,7 @@ if not SKIP_EXTENSIONS:
         ("principal_heimdal", "krb5_principal_get_realm"),
         "string",
         ("string_mit", "krb5_enctype_to_name"),
+        "localauth",
     ]:
         name = e
         canary = None
