@@ -130,6 +130,8 @@ jobs:
         name: artifact
         path: ./dist
 
+    - run: sudo chown dist/*
+
     - name: Test
       run: sudo -E build_helpers/run-ci.sh
       env:
