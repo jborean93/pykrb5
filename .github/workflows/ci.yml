@@ -55,15 +55,15 @@ jobs:
         os:
         - macOS-12
         version:
-        - cp37-macosx_x86_64
-        - cp38-macosx_x86_64
-        - cp38-macosx_arm64
-        - cp39-macosx_x86_64
-        - cp39-macosx_arm64
-        - cp310-macosx_x86_64
-        - cp310-macosx_arm64
+        # - cp37-macosx_x86_64
+        # - cp38-macosx_x86_64
+        # - cp38-macosx_arm64
+        # - cp39-macosx_x86_64
+        # - cp39-macosx_arm64
+        # - cp310-macosx_x86_64
+        # - cp310-macosx_arm64
         - cp311-macosx_x86_64
-        - cp311-macosx_arm64
+        # - cp311-macosx_arm64
 
     steps:
     - uses: actions/download-artifact@v3
@@ -105,10 +105,10 @@ jobs:
         - ubuntu-latest
         - macOS-12
         python-version:
-        - 3.7
-        - 3.8
-        - 3.9
-        - '3.10'
+        # - 3.7
+        # - 3.8
+        # - 3.9
+        # - '3.10'
         - '3.11'
         provider:
         - mit
@@ -130,7 +130,7 @@ jobs:
         name: artifact
         path: ./dist
 
-    - run: sudo chown dist/*
+    - run: sudo chown root dist/*
 
     - name: Test
       run: sudo -E build_helpers/run-ci.sh
