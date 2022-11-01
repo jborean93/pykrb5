@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.5.0 - TBD
+
 ## 0.4.1 - 2022-10-25
 
 * Added Python 3.11 wheel
