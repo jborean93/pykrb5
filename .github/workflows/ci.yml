@@ -86,7 +86,7 @@ jobs:
         CIBW_BUILD: ${{ matrix.version }}
         CIBW_BUILD_VERBOSITY: 1
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         path: ./wheelhouse/*.whl
         name: artifact
@@ -117,8 +117,6 @@ jobs:
         exclude:
         - os: macOS-12
           provider: mit
-        - os: macOS-12
-          python-version: '3.11'  # https://github.com/actions/setup-python/issues/531
 
     steps:
     - uses: actions/checkout@v3
