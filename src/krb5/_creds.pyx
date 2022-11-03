@@ -159,7 +159,8 @@ cdef krb5_error_code prompt_callback(
             replies.append(reply)
 
         for idx, reply in enumerate(replies):
-            pykrb5_set_krb5_data(prompts[idx].reply, len(reply), <char *>reply)
+            if pykrb5_set_krb5_data(prompts[idx].reply, len(reply), <char *>reply) != 0:
+                raise Exception("[prompter callback] Our reply is too big for the caller's buffer.")
 
         return 0
 

@@ -6,16 +6,29 @@ from libc.stdint cimport int32_t, uint8_t, uint32_t
 
 cdef extern from "python_krb5.h":
     """
-    // The structures are different so cannot be explicitly defined in Cython. Use inline C to set the structs elements
-    // by name.
-    void pykrb5_set_krb5_data(
+    // The structures are different so cannot be explicitly defined in Cython; use inline C.
+    int pykrb5_set_krb5_data(
         krb5_data *data,
         size_t length,
         char *value
     )
     {
+    /*
+       The caller (at least, MIT Kerberos) expects us to return the
+       data in the buffer referred to by the krb5_data struct as it's
+       passed to us -- and not, as would also be plausible, to
+       *update* the krb5_data with our *own* buffer. That, is we must
+       copy the data from value to data->data, rather than update the
+       data->data pointer. If we do the latter, the caller simply
+       ignores the new buffer we return and proceeds to use its own
+       buffer, which we never updated.
+    */
+        if (data->length < length)
+            return 1;
+
+        memcpy(data->data, value, length);
         data->length = length;
-        data->data = value;
+        return 0;
     }
     """
 
@@ -92,7 +105,7 @@ cdef extern from "python_krb5.h":
         krb5_prompt prompts[],
     )
 
-    void pykrb5_set_krb5_data(
+    int pykrb5_set_krb5_data(
         krb5_data *data,
         size_t length,
         char *value,
