@@ -60,8 +60,12 @@ cdef class Context:
 
 
 def init_context() -> Context:
+    cdef krb5_error_code = 0
     context = Context()
-    krb5_init_context(&context.raw)
+
+    err = krb5_init_context(&context.raw)
+    if err:
+        raise Krb5Error(context, err)
 
     return context
 
