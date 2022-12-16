@@ -1,11 +1,27 @@
 # Copyright: (c) 2021 Jordan Borean (@jborean93) <jborean93@gmail.com>
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
+import enum
 import typing
 
 from krb5._context import Context
 from krb5._creds import Creds
 from krb5._principal import Principal
+
+class CredentialsRetrieveFlags(enum.IntEnum):
+    """Flags used to control :meth:`cc_retrieve_cred` and  :meth:`cc_remove_cred`."""
+
+    none: CredentialsRetrieveFlags = ...  #: No matching flags set
+    match_times: CredentialsRetrieveFlags = ...  #: The requested lifetime must be at least as great as specified
+    match_is_skey: CredentialsRetrieveFlags = ...  #: The is_skey field must match exactly
+    match_flags: CredentialsRetrieveFlags = ...  #: All the flags set in the match credentials must be set
+    match_times_exact: CredentialsRetrieveFlags = ...  #: All the time fields must match exactly
+    match_flags_exact: CredentialsRetrieveFlags = ...  #: All the flags must match exactly
+    match_authdata: CredentialsRetrieveFlags = ...  #: The authorization data must match
+    match_srv_nameonly: CredentialsRetrieveFlags = ...  #: Only the name portion of the principal name must match
+    match_2nd_tkt: CredentialsRetrieveFlags = ...  #: The second ticket must match
+    match_keytype: CredentialsRetrieveFlags = ...  #: The encryption key type must match
+    supported_ktypes: CredentialsRetrieveFlags = ...  #: The supported key types must match
 
 class CCache:
     """Kerberos CCache
@@ -158,6 +174,24 @@ def cc_new_unique(
         CCache: The created credential cache.
     """
 
+def cc_remove_cred(
+    context: Context,
+    cache: CCache,
+    flags: typing.Union[int, CredentialsRetrieveFlags],
+    creds: Creds,
+) -> None:
+    """Remove matching credentials from a credential cache.
+
+    Remove all credential which match creds according to flags from the
+    credential cache.
+
+    Args:
+        context: Krb5 context.
+        cache: The credential cache to store the creds into.
+        flags: The flags describing how to perform the matching.
+        creds: The credentials to match against.
+    """
+
 def cc_resolve(
     context: Context,
     name: bytes,
@@ -175,6 +209,27 @@ def cc_resolve(
 
     Returns:
         CCache: The credential cache that was resolved.
+    """
+
+def cc_retrieve_cred(
+    context: Context,
+    cache: CCache,
+    flags: typing.Union[int, CredentialsRetrieveFlags],
+    mcreds: Creds,
+) -> Creds:
+    """Retrieve matching credentials from a credential cache.
+
+    Retrieve all credential which match creds according to flags from the
+    credential cache.
+
+    Args:
+        context: Krb5 context.
+        cache: The credential cache to store the creds into.
+        flags: The flags describing how to perform the matching.
+        mcreds: The credentials to match against.
+
+    Returns:
+        Creds: The matching credentials.
     """
 
 def cc_set_default_name(

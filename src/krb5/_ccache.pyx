@@ -1,6 +1,7 @@
 # Copyright: (c) 2021 Jordan Borean (@jborean93) <jborean93@gmail.com>
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
+import enum
 import typing
 
 from libc.stdint cimport uintptr_t
@@ -76,10 +77,25 @@ cdef extern from "python_krb5.h":
         krb5_creds *cred,
     ) nogil
 
+    krb5_error_code krb5_cc_remove_cred(
+        krb5_context context,
+        krb5_ccache cache,
+        int flags,
+        krb5_creds *creds,
+    ) nogil
+
     krb5_error_code krb5_cc_resolve(
         krb5_context context,
         const char *name,
         krb5_ccache *cache,
+    ) nogil
+
+    krb5_error_code krb5_cc_retrieve_cred(
+        krb5_context context,
+        krb5_ccache cache,
+        int flags,
+        krb5_creds *mcreds,
+        krb5_creds *creds,
     ) nogil
 
     krb5_error_code krb5_cc_set_default_name(
@@ -103,6 +119,38 @@ cdef extern from "python_krb5.h":
         krb5_context context,
         krb5_ccache cache,
     ) nogil
+
+    int32_t KRB5_TC_MATCH_TIMES
+    int32_t KRB5_TC_MATCH_IS_SKEY
+    int32_t KRB5_TC_MATCH_FLAGS
+    int32_t KRB5_TC_MATCH_TIMES_EXACT
+    int32_t KRB5_TC_MATCH_FLAGS_EXACT
+    int32_t KRB5_TC_MATCH_AUTHDATA
+    int32_t KRB5_TC_MATCH_SRV_NAMEONLY
+    int32_t KRB5_TC_MATCH_2ND_TKT
+    int32_t KRB5_TC_MATCH_KTYPE
+    int32_t KRB5_TC_SUPPORTED_KTYPES
+
+
+_CredentialsRetrieveFlags_members = [
+    ('none', 0),
+    ('match_times', KRB5_TC_MATCH_TIMES),
+    ('match_is_skey', KRB5_TC_MATCH_IS_SKEY),
+    ('match_flags', KRB5_TC_MATCH_FLAGS),
+    ('match_times_exact', KRB5_TC_MATCH_TIMES_EXACT),
+    ('match_flags_exact', KRB5_TC_MATCH_FLAGS_EXACT),
+    ('match_authdata', KRB5_TC_MATCH_AUTHDATA),
+    ('match_srv_nameonly', KRB5_TC_MATCH_SRV_NAMEONLY),
+    ('match_2nd_tkt', KRB5_TC_MATCH_2ND_TKT),
+    ('match_keytype', KRB5_TC_MATCH_KTYPE),
+]
+# If KRB5_TC_SUPPORTED_KTYPES is not available it will be set to 0 in
+# python_krb5.h
+if KRB5_TC_SUPPORTED_KTYPES != 0:
+    _CredentialsRetrieveFlags_members += [
+        ('supported_ktypes', KRB5_TC_SUPPORTED_KTYPES),
+    ]
+CredentialsRetrieveFlags = enum.IntEnum('CredentialsRetrieveFlags', _CredentialsRetrieveFlags_members)
 
 
 cdef class CCache:
@@ -278,6 +326,19 @@ def cc_new_unique(
     return ccache
 
 
+def cc_remove_cred(
+    Context context not None,
+    CCache cache not None,
+    int flags,
+    Creds creds not None,
+) -> None:
+    cdef krb5_error_code err = 0
+
+    err = krb5_cc_remove_cred(context.raw, cache.raw, flags, &creds.raw)
+    if err:
+        raise Krb5Error(context, err)
+
+
 def cc_resolve(
     Context context not None,
     const unsigned char[:] name not None,
@@ -296,6 +357,22 @@ def cc_resolve(
         raise Krb5Error(context, err)
 
     return ccache
+
+
+def cc_retrieve_cred(
+    Context context not None,
+    CCache cache not None,
+    int flags,
+    Creds mcreds not None,
+) -> Creds:
+    creds = Creds(context)
+    cdef krb5_error_code err = 0
+
+    err = krb5_cc_retrieve_cred(context.raw, cache.raw, flags, &mcreds.raw, &creds.raw)
+    if err:
+        raise Krb5Error(context, err)
+
+    return creds
 
 
 def cc_set_default_name(
