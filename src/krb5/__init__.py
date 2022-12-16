@@ -3,6 +3,7 @@
 
 from krb5._ccache import (
     CCache,
+    CredentialsRetrieveFlags,
     cc_default,
     cc_default_name,
     cc_destroy,
@@ -11,7 +12,9 @@ from krb5._ccache import (
     cc_get_type,
     cc_initialize,
     cc_new_unique,
+    cc_remove_cred,
     cc_resolve,
+    cc_retrieve_cred,
     cc_set_default_name,
     cc_store_cred,
     cc_switch,
@@ -70,6 +73,7 @@ from krb5._string import enctype_to_string, string_to_enctype
 __all__ = [
     "CCache",
     "Context",
+    "CredentialsRetrieveFlags",
     "Creds",
     "GetInitCredsOpt",
     "InitCredsContext",
@@ -89,7 +93,9 @@ __all__ = [
     "cc_get_type",
     "cc_initialize",
     "cc_new_unique",
+    "cc_remove_cred",
     "cc_resolve",
+    "cc_retrieve_cred",
     "cc_set_default_name",
     "cc_store_cred",
     "cc_switch",

@@ -4,6 +4,7 @@
 import os
 import os.path
 import pathlib
+import platform
 import sys
 
 import k5test
@@ -264,3 +265,32 @@ def test_cc_cache_match(realm: k5test.K5Realm, tmp_path: pathlib.Path, monkeypat
     assert user_actual.name == b":" + bytes(tmp_path) + b"/tkt-user"
     assert user_actual.principal
     assert user_actual.principal.name == user_princ.name
+
+
+def test_cc_retrieve_remove_cred(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
+    ctx = krb5.init_context()
+    princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
+    opt = krb5.get_init_creds_opt_alloc(ctx)
+    creds = krb5.get_init_creds_password(ctx, princ, opt, realm.password("user").encode())
+
+    cc = krb5.cc_resolve(ctx, f"{tmp_path / 'ccache'}".encode())
+    krb5.cc_initialize(ctx, cc, princ)
+
+    msg_pattern = "Matching credential not found|End of credential cache reached|Did not find credential for"
+    with pytest.raises(krb5.Krb5Error, match=msg_pattern):
+        c = krb5.cc_retrieve_cred(ctx, cc, krb5.CredentialsRetrieveFlags.match_srv_nameonly, creds)
+
+    assert len(list(cc)) == 0
+    krb5.cc_store_cred(ctx, cc, creds)
+    assert len(list(cc)) > 0
+
+    krb5.cc_retrieve_cred(ctx, cc, krb5.CredentialsRetrieveFlags.match_srv_nameonly, creds)
+
+    krb5.cc_remove_cred(ctx, cc, krb5.CredentialsRetrieveFlags.match_srv_nameonly, creds)
+
+    if realm.provider.lower() == "heimdal" and platform.system() == "Linux":
+        pytest.skip("Removing credentials does not seem to have an effect with heimdal on Linux")
+
+    msg_pattern = "Matching credential not found|End of credential cache reached|Did not find credential for"
+    with pytest.raises(krb5.Krb5Error, match=msg_pattern):
+        krb5.cc_retrieve_cred(ctx, cc, krb5.CredentialsRetrieveFlags.match_srv_nameonly, creds)
