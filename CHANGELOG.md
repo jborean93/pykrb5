@@ -2,6 +2,9 @@
 
 ## 0.5.0 - TBD
 
+* Added exception that is raised when `krb5.init_context()` failed
+* Moved back to `setup.cfg` based setuptools project for compatibility with `pip` present on system distributions
+
 ## 0.4.1 - 2022-10-25
 
 * Added Python 3.11 wheel
