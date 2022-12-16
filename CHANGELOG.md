@@ -4,6 +4,9 @@
 
 * Added exception that is raised when `krb5.init_context()` failed
 * Moved back to `setup.cfg` based setuptools project for compatibility with `pip` present on system distributions
+* Added CCache APIs:
+  * [krb5_cc_remove_cred](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_cc_remove_cred.html)
+  * [krb5_cc_retrieve_cred](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_cc_retrieve_cred.html)
 
 ## 0.4.1 - 2022-10-25
 
