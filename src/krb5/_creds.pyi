@@ -5,8 +5,15 @@ import typing
 
 from krb5._context import Context
 from krb5._creds_opt import GetInitCredsOpt
+from krb5._keyblock import KeyBlock
 from krb5._kt import KeyTab
 from krb5._principal import Principal
+
+class TicketTimes(typing.NamedTuple):
+    authtime: int
+    starttime: int
+    endtime: int
+    renew_till: int
 
 class Creds:
     """Kerberos Credentials object.
@@ -16,6 +23,34 @@ class Creds:
     Args:
         context: Krb5 context.
     """
+
+    @property
+    def client(self) -> Principal:
+        """Client's principal identifier."""
+    @property
+    def server(self) -> Principal:
+        """Server's principal identifier."""
+    @property
+    def keyblock(self) -> KeyBlock:
+        """Session encryption key info."""
+    @property
+    def times(self) -> TicketTimes:
+        """Lifetime info."""
+    # @property
+    # def ticket_flags(self) -> int:
+    #     """Flags in ticket."""
+    # @property
+    # def addresses(self) -> Address:
+    #     """Addrs in ticket."""
+    @property
+    def ticket(self) -> bytes:
+        """Ticket string itself."""
+    @property
+    def second_ticket(self) -> bytes:
+        """second ticket, if related to ticket (via DUPLICATE-SKEY or ENC-TKT-IN-SKEY)"""
+    # @property
+    # def authdata(self) -> Authdata:
+    #     """authorization data"""
 
 class InitCredsContext:
     """Kerberos Initial Credentials object.

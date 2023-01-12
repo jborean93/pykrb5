@@ -25,6 +25,7 @@ from krb5._creds import (
     Creds,
     InitCredsContext,
     Krb5Prompt,
+    TicketTimes,
     get_init_creds_keytab,
     get_init_creds_password,
     init_creds_get,
@@ -46,7 +47,7 @@ from krb5._creds_opt import (
     get_init_creds_opt_set_tkt_life,
 )
 from krb5._exceptions import Krb5Error
-from krb5._keyblock import KeyBlock, init_keyblock
+from krb5._keyblock import KeyBlock, copy_keyblock, init_keyblock
 from krb5._kt import (
     KeyTab,
     KeyTabEntry,
@@ -85,6 +86,7 @@ __all__ = [
     "Principal",
     "PrincipalParseFlags",
     "PrincipalUnparseFlags",
+    "TicketTimes",
     "cc_default",
     "cc_default_name",
     "cc_destroy",
@@ -100,6 +102,7 @@ __all__ = [
     "cc_store_cred",
     "cc_switch",
     "cccol_iter",
+    "copy_keyblock",
     "copy_principal",
     "enctype_to_string",
     "get_default_realm",
