@@ -38,6 +38,16 @@ def test_get_init_creds_keytab(realm: k5test.K5Realm) -> None:
     assert isinstance(creds, krb5.Creds)
     assert str(creds) == "Creds"
 
+    assert creds.client.name == realm.host_princ.encode()
+    assert creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+    assert len(creds.keyblock.data) > 0
+    assert str(creds.times).startswith("TicketTimes(authtime=")
+    # creds.ticket_flags
+    # creds.addresses
+    assert len(creds.ticket) > 0
+    assert creds.second_ticket == b""
+    # creds.authdata
+
 
 def test_get_init_creds_password(realm: k5test.K5Realm) -> None:
     ctx = krb5.init_context()

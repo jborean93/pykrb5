@@ -17,6 +17,28 @@ cdef extern from "python_krb5.h":
         data->length = length;
         data->data = value;
     }
+
+    void pykrb5_get_krb5_data(
+        krb5_data *data,
+        size_t *length,
+        char **value
+    )
+    {
+        if (length) *length = data->length;
+        if (value) *value = data->data;
+    }
+
+    void pykrb5_free_data_contents(
+        krb5_context context,
+        krb5_data *val
+    )
+    {
+#if defined(HEIMDAL_XFREE)
+        krb5_data_free(val);
+#else
+        krb5_free_data_contents(context, val);
+#endif
+    }
     """
 
     ctypedef int32_t krb5_int32
@@ -40,7 +62,7 @@ cdef extern from "python_krb5.h":
         pass
     ctypedef _krb5_cccol_cursor *krb5_cccol_cursor
 
-    cdef struct krb5_principal_data:
+    ctypedef struct krb5_principal_data:
         pass
     ctypedef krb5_principal_data *krb5_principal
     ctypedef const krb5_principal_data *krb5_const_principal
@@ -83,6 +105,13 @@ cdef extern from "python_krb5.h":
         krb5_data *reply
     ctypedef _krb5_prompt krb5_prompt
 
+    cdef struct _pykrb5_ticket_times:
+        krb5_timestamp authtime
+        krb5_timestamp starttime
+        krb5_timestamp endtime
+        krb5_timestamp renew_till
+    ctypedef _pykrb5_ticket_times pykrb5_ticket_times
+
     ctypedef krb5_error_code(*krb5_prompter_fct)(
         krb5_context context,
         void *data,
@@ -96,4 +125,10 @@ cdef extern from "python_krb5.h":
         krb5_data *data,
         size_t length,
         char *value,
+    ) nogil
+
+    void pykrb5_get_krb5_data(
+        krb5_data *data,
+        size_t *length,
+        char **value,
     ) nogil

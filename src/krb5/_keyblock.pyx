@@ -83,6 +83,12 @@ cdef extern from "python_krb5.h":
         char **data,
     ) nogil
 
+    krb5_error_code krb5_copy_keyblock(
+        krb5_context context,
+        const krb5_keyblock *from_,
+        krb5_keyblock **to,
+    ) nogil
+
 
 cdef class KeyBlock:
     # cdef Context ctx
@@ -154,3 +160,17 @@ def init_keyblock(
         raise Krb5Error(context, err)
 
     return kb
+
+
+def copy_keyblock(
+    Context context not None,
+    KeyBlock keyblock not None,
+) -> KeyBlock:
+    out = KeyBlock(context)
+    cdef krb5_error_code err = 0
+
+    err = krb5_copy_keyblock(context.raw, keyblock.raw, &out.raw)
+    if err:
+        raise Krb5Error(context, err)
+
+    return out

@@ -1,5 +1,11 @@
 #include "krb5.h"
 
+#if defined(HEIMDAL_XFREE)
+typedef krb5_times pykrb5_ticket_times;
+#else
+typedef krb5_ticket_times pykrb5_ticket_times;
+#endif
+
 // Heimdal does not define this
 #ifndef KRB5_KT_NAME_TOOLONG
 #define KRB5_KT_NAME_TOOLONG 1

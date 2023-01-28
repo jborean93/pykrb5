@@ -41,3 +41,19 @@ def init_keyblock(
     Returns:
         KeyBlock: The initialized keyblock.
     """
+
+def copy_keyblock(
+    context: Context,
+    keyblock: KeyBlock,
+) -> KeyBlock:
+    """Copy a keyblock.
+
+    Create a copy of the keyblock specified.
+
+    Args:
+        context: Krb5 context.
+        keyblock: The keyblock to copy.
+
+    Returns:
+        KeyBlock: The copy of the keyblock.
+    """
