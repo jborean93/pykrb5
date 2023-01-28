@@ -4,9 +4,18 @@
 
 * Added exception that is raised when `krb5.init_context()` failed
 * Moved back to `setup.cfg` based setuptools project for compatibility with `pip` present on system distributions
+* Added the following properties to the `Creds` object:
+  * `client` - A copy of the credential's client principal
+  * `server` - A copy of the credential's server principal
+  * `keyblock` - A copy of the credential's session encryption key info
+  * `times` - A copy of the credential's lifetime info including the auth time, star time, end time, and renewal time
+  * `ticket` -  A copy of the credential's ticket data
+  * `second_ticket` - A copy of the credential's second ticket data (`DUPLICATE-SKEY` or `ENC-TKT-IN-SKEY`)
 * Added CCache APIs:
   * [krb5_cc_remove_cred](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_cc_remove_cred.html)
   * [krb5_cc_retrieve_cred](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_cc_retrieve_cred.html)
+* Added Keyblock APIs:
+  * [krb5_copy_keyblock](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_copy_keyblock.html)
 
 ## 0.4.1 - 2022-10-25
 
