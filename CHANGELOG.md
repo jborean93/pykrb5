@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 - TBD
+## 0.5.0 - 2023-02-20
 
 * Added exception that is raised when `krb5.init_context()` failed
 * Moved back to `setup.cfg` based setuptools project for compatibility with `pip` present on system distributions
