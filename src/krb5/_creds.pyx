@@ -263,7 +263,7 @@ cdef krb5_error_code prompt_callback(
     const char *banner,
     int num_prompts,
     krb5_prompt *prompts,
-) with gil:
+) noexcept with gil:
     try:
         prompter = <Krb5Prompt>data
 
