@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "Cython >= 0.29.29, < 3.0.0",  # 0.29.29 includes fixes for Python 3.11
+    "Cython >= 0.29.32, < 3.0.0",  # 0.29.31 includes noexcept keyword support
     "setuptools >= 42.0.0",  # Supports license_files
 ]
 build-backend = "setuptools.build_meta"
