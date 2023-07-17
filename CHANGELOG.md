@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1 - TBD
+
+* Added support for Cython 3.x.y when building the extension modules
+
 ## 0.5.0 - 2023-02-20
 
 * Added exception that is raised when `krb5.init_context()` failed
