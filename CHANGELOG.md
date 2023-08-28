@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.1 - TBD
+## 0.5.1 - 2023-08-29
 
 * Added support for Cython 3.x.y when building the extension modules
 * Added Python 3.12 wheel for macOS
