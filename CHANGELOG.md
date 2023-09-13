@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2 - TBD
+
+* Fix up wheel package build to not include uneeded `python_krb5.h` file in the final `site-packages` install dir
+
 ## 0.5.1 - 2023-08-29
 
 * Added support for Cython 3.x.y when building the extension modules
