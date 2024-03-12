@@ -277,3 +277,35 @@ def cc_switch(
         context: Krb5 context.
         cache: The credential cache to set as the primary in its collection.
     """
+
+def cc_get_config(
+    context: Context,
+    cache: CCache,
+    principal: typing.Optional[Principal],
+    key: bytes,
+) -> bytes:
+    """Get a configuration value from a credential cache.
+
+    Args:
+        context: Krb5 context.
+        cache: The credential cache to get the data from.
+        principal: The principal to get the configuration for or None for global values.
+        key: Name of the variable.
+    """
+
+def cc_set_config(
+    context: Context,
+    cache: CCache,
+    principal: typing.Optional[Principal],
+    key: bytes,
+    data: bytes,
+) -> bytes:
+    """Store a configuration value in a credential cache.
+
+    Args:
+        context: Krb5 context.
+        cache: The credential cache to store the data in.
+        principal: The principal to set the configuration for or None for global values.
+        key: Name of the variable.
+        data: Data to store or None to remove.
+    """

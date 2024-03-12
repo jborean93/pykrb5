@@ -120,6 +120,22 @@ cdef extern from "python_krb5.h":
         krb5_ccache cache,
     ) nogil
 
+    krb5_error_code krb5_cc_get_config(
+        krb5_context context,
+        krb5_ccache id,
+        krb5_const_principal principal,
+        const char *key,
+        krb5_data *data,
+    );
+
+    krb5_error_code krb5_cc_set_config(
+        krb5_context context,
+        krb5_ccache id,
+        krb5_const_principal principal,
+        const char *key,
+        krb5_data *data,
+    ) nogil
+
     int32_t KRB5_TC_MATCH_TIMES
     int32_t KRB5_TC_MATCH_IS_SKEY
     int32_t KRB5_TC_MATCH_FLAGS
@@ -409,5 +425,77 @@ def cc_switch(
     cdef krb5_error_code err = 0
 
     err = krb5_cc_switch(context.raw, cache.raw)
+    if err:
+        raise Krb5Error(context, err)
+
+
+def cc_get_config(
+    Context context not None,
+    CCache cache not None,
+    Principal principal,
+    const unsigned char[:] key not None,
+) -> bytes:
+    cdef krb5_error_code err = 0
+
+    cdef krb5_principal principal_raw = NULL
+    if principal is not None:
+        principal_raw = principal.raw
+
+    cdef const char *key_ptr
+    if len(key):
+        key_ptr = <const char*>&key[0]
+    else:
+        key_ptr = ""
+
+    cdef krb5_data data
+    err = krb5_cc_get_config(context.raw, cache.raw, principal_raw, key_ptr, &data)
+    if err:
+        raise Krb5Error(context, err)
+
+    cdef size_t length
+    cdef char *value
+    pykrb5_get_krb5_data(&data, &length, &value)
+
+    if length == 0:
+        data_bytes = b""
+    else:
+        data_bytes = <bytes>value[:length]
+
+    pykrb5_free_data_contents(context.raw, &data)
+
+    return data_bytes
+
+
+def cc_set_config(
+    Context context not None,
+    CCache cache not None,
+    Principal principal,
+    const unsigned char[:] key not None,
+    const unsigned char[:] data,
+) -> None:
+    cdef krb5_error_code err = 0
+
+    cdef krb5_principal principal_raw = NULL
+    if principal is not None:
+        principal_raw = principal.raw
+
+    cdef const char *key_ptr
+    if len(key):
+        key_ptr = <const char*>&key[0]
+    else:
+        key_ptr = ""
+
+    cdef krb5_data data_raw
+    cdef krb5_data* data_ptr
+    if data is None:
+        data_ptr = NULL
+    else:
+        if len(data) == 0:
+            pykrb5_set_krb5_data(&data_raw, 0, "")
+        else:
+            pykrb5_set_krb5_data(&data_raw, len(data), <char *>&data[0])
+        data_ptr = &data_raw
+
+    err = krb5_cc_set_config(context.raw, cache.raw, principal_raw, key_ptr, data_ptr)
     if err:
         raise Krb5Error(context, err)

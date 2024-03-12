@@ -267,6 +267,41 @@ def test_cc_cache_match(realm: k5test.K5Realm, tmp_path: pathlib.Path, monkeypat
     assert user_actual.principal.name == user_princ.name
 
 
+def test_cc_config(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
+    ctx = krb5.init_context()
+    princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
+
+    cc = krb5.cc_resolve(ctx, f"{tmp_path / 'ccache'}".encode())
+    krb5.cc_initialize(ctx, cc, princ)
+
+    princ2 = krb5.parse_name_flags(ctx, b"other_principal")
+
+    key1 = b"ConfigKey1"
+    key2 = b"SecondConfigKey"
+
+    msg_pattern = "Matching credential not found|End of credential cache reached|Did not find credential for"
+    with pytest.raises(krb5.Krb5Error, match=msg_pattern):
+        c = krb5.cc_get_config(ctx, cc, None, key1)
+    with pytest.raises(krb5.Krb5Error, match=msg_pattern):
+        c = krb5.cc_get_config(ctx, cc, None, key2)
+    with pytest.raises(krb5.Krb5Error, match=msg_pattern):
+        c = krb5.cc_get_config(ctx, cc, princ2, key1)
+    with pytest.raises(krb5.Krb5Error, match=msg_pattern):
+        c = krb5.cc_get_config(ctx, cc, princ2, key2)
+
+    krb5.cc_set_config(ctx, cc, None, key1, b"Value1")
+    krb5.cc_set_config(ctx, cc, princ2, key2, b"Value2")
+
+    value1 = krb5.cc_get_config(ctx, cc, None, key1)
+    assert value1 == b"Value1"
+    with pytest.raises(krb5.Krb5Error, match=msg_pattern):
+        c = krb5.cc_get_config(ctx, cc, None, key2)
+    with pytest.raises(krb5.Krb5Error, match=msg_pattern):
+        c = krb5.cc_get_config(ctx, cc, princ2, key1)
+    value2 = krb5.cc_get_config(ctx, cc, princ2, key2)
+    assert value2 == b"Value2"
+
+
 def test_cc_retrieve_remove_cred(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
     ctx = krb5.init_context()
     princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
