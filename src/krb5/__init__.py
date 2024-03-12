@@ -20,7 +20,15 @@ from krb5._ccache import (
     cc_switch,
 )
 from krb5._cccol import cccol_iter
-from krb5._context import Context, get_default_realm, init_context, set_default_realm
+from krb5._context import (
+    Context,
+    get_default_realm,
+    init_context,
+    set_default_realm,
+    set_real_time,
+    timeofday,
+    us_timeofday,
+)
 from krb5._creds import (
     Creds,
     InitCredsContext,
@@ -135,8 +143,11 @@ __all__ = [
     "kt_resolve",
     "parse_name_flags",
     "set_default_realm",
+    "set_real_time",
     "string_to_enctype",
+    "timeofday",
     "unparse_name_flags",
+    "us_timeofday",
 ]
 
 # Provider or version specific APIs
@@ -168,6 +179,13 @@ except ImportError:
     pass
 else:
     __all__.append("init_secure_context")
+
+try:
+    from krb5._context_mit import get_time_offsets
+except ImportError:
+    pass
+else:
+    __all__.append("get_time_offsets")
 
 
 try:
