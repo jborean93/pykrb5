@@ -132,3 +132,8 @@ cdef extern from "python_krb5.h":
         size_t *length,
         char **value,
     ) nogil
+
+    void pykrb5_free_data_contents(
+        krb5_context context,
+        krb5_data *val,
+    ) nogil
