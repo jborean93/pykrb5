@@ -3,6 +3,7 @@
 
 import typing
 
+from krb5._ccache import CCache
 from krb5._context import Context
 from krb5._creds_opt import GetInitCredsOpt
 from krb5._keyblock import KeyBlock
@@ -246,4 +247,19 @@ def init_creds_set_password(
         context: Krb5 context.
         ctx: Initial credentials context.
         password: The password to set.
+    """
+
+def get_renewed_creds(
+    context: Context,
+    client: Principal,
+    ccache: CCache,
+    in_tkt_service: typing.Optional[bytes] = None,
+) -> Creds:
+    """Get renewed credentials from the KDC.
+
+    Args:
+        context: Krb5 context.
+        client: Client principal name.
+        ccache: The cache to get the existing credentials from.
+        in_tkt_service: Server principal string or None.
     """

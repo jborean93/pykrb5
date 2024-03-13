@@ -1,6 +1,7 @@
 # Copyright: (c) 2021 Jordan Borean (@jborean93) <jborean93@gmail.com>
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
+import time
 import typing
 
 import k5test
@@ -154,3 +155,67 @@ def test_init_creds_set_password_invalid(realm: k5test.K5Realm) -> None:
     # Too many different error messages - just expect an error
     with pytest.raises(krb5.Krb5Error):
         krb5.init_creds_get(ctx, creds_ctx)
+
+
+def test_renew_creds(realm: k5test.K5Realm) -> None:
+    ctx = krb5.init_context()
+    princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
+    opt = krb5.get_init_creds_opt_alloc(ctx)
+    # Ask for a renewable ticket
+    krb5.get_init_creds_opt_set_renew_life(opt, 1024)
+    creds = krb5.get_init_creds_password(ctx, princ, opt, realm.password("user").encode())
+
+    assert creds.client.name == realm.user_princ.encode()
+    assert creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+
+    cc = krb5.cc_new_unique(ctx, b"MEMORY")
+    krb5.cc_initialize(ctx, cc, princ)
+    krb5.cc_store_cred(ctx, cc, creds)
+
+    new_creds = krb5.get_renewed_creds(ctx, creds.client, cc)
+    assert new_creds.client.name == realm.user_princ.encode()
+    assert new_creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+
+    new_creds = krb5.get_renewed_creds(ctx, creds.client, cc, b"krbtgt/KRBTEST.COM@KRBTEST.COM")
+    assert new_creds.client.name == realm.user_princ.encode()
+    assert new_creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+
+
+@pytest.mark.requires_api("get_validated_creds")
+def test_validate_creds(realm: k5test.K5Realm) -> None:
+    ctx = krb5.init_context()
+    princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
+    opt = krb5.get_init_creds_opt_alloc(ctx)
+    # Get postdated ticket, ticket will be valid after 1s
+    creds = krb5.get_init_creds_password(ctx, princ, opt, realm.password("user").encode(), start_time=1)
+    # Ticket flags for creds should have TKT_FLG_POSTDATED and TKT_FLG_INVALID set
+
+    assert creds.client.name == realm.user_princ.encode()
+    assert creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+
+    cc = krb5.cc_new_unique(ctx, b"MEMORY")
+    krb5.cc_initialize(ctx, cc, princ)
+    krb5.cc_store_cred(ctx, cc, creds)
+
+    start_time = time.time()
+    while True:
+        try:
+            new_creds = krb5.get_validated_creds(ctx, creds.client, cc)
+            break
+        except krb5.Krb5Error as e:
+            # Retry within the first 5s when the error is
+            # KRB5KRB_AP_ERR_TKT_NYV ("Ticket not yet valid"). The ticket should
+            # normally be valid after 0-1s.
+            if (time.time() - start_time < 5) and e.err_code == -1765328351:
+                # Retry
+                time.sleep(0.1)
+            else:
+                raise
+    assert new_creds.client.name == realm.user_princ.encode()
+    assert new_creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+    # Ticket flags for new_creds should have TKT_FLG_POSTDATED set and TKT_FLG_INVALID cleared
+
+    new_creds = krb5.get_validated_creds(ctx, creds.client, cc, b"krbtgt/KRBTEST.COM@KRBTEST.COM")
+    assert new_creds.client.name == realm.user_princ.encode()
+    assert new_creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+    # Ticket flags for new_creds should have TKT_FLG_POSTDATED set and TKT_FLG_INVALID cleared
