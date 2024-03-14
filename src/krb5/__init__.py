@@ -38,6 +38,7 @@ from krb5._creds import (
     TicketTimes,
     get_init_creds_keytab,
     get_init_creds_password,
+    get_renewed_creds,
     init_creds_get,
     init_creds_get_creds,
     init_creds_init,
@@ -129,6 +130,7 @@ __all__ = [
     "get_init_creds_opt_set_salt",
     "get_init_creds_opt_set_tkt_life",
     "get_init_creds_password",
+    "get_renewed_creds",
     "init_context",
     "init_creds_get",
     "init_creds_get_creds",
@@ -161,6 +163,14 @@ except ImportError:
     pass
 else:
     __all__.append("cc_dup")
+
+
+try:
+    from krb5._creds_mit import get_validated_creds
+except ImportError:
+    pass
+else:
+    __all__.append("get_validated_creds")
 
 
 try:

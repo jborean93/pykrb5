@@ -8,6 +8,7 @@ from krb5._exceptions import Krb5Error
 from krb5._keyblock import copy_keyblock
 from krb5._principal import copy_principal
 
+from krb5._ccache cimport CCache
 from krb5._context cimport Context
 from krb5._creds_opt cimport GetInitCredsOpt
 from krb5._keyblock cimport KeyBlock
@@ -127,6 +128,14 @@ cdef extern from "python_krb5.h":
         krb5_context context,
         krb5_init_creds_context ctx,
         const char *password,
+    ) nogil
+
+    krb5_error_code krb5_get_renewed_creds(
+        krb5_context context,
+        krb5_creds *creds,
+        krb5_principal client,
+        krb5_ccache ccache,
+        const char *in_tkt_service,
     ) nogil
 
 
@@ -466,6 +475,26 @@ def init_creds_set_password(
     if err:
         raise Krb5Error(context, err)
 
+def get_renewed_creds(
+    Context context not None,
+    Principal client not None,
+    CCache ccache not None,
+    const unsigned char[:] in_tkt_service = None,
+) -> Creds:
+    creds = Creds(context)
+    cdef krb5_error_code err = 0
+
+    cdef const char *in_tkt_service_ptr = NULL
+    if in_tkt_service is not None and len(in_tkt_service):
+        in_tkt_service_ptr = <const char*>&in_tkt_service[0]
+
+    err = krb5_get_renewed_creds(context.raw, &creds.raw, client.raw, ccache.raw, in_tkt_service_ptr)
+    if err:
+        raise Krb5Error(context, err)
+
+    creds.needs_free = 1
+
+    return creds
 
 TicketTimes = collections.namedtuple('TicketTimes', [
     'authtime',
