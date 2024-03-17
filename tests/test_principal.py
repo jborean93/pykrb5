@@ -90,3 +90,104 @@ def test_principal_get_realm() -> None:
 
     realm = krb5.principal_get_realm(ctx, principal)
     assert realm == b"REALM.COM"
+
+
+def test_principal_accessors() -> None:
+    ctx = krb5.init_context()
+    principal = krb5.parse_name_flags(ctx, b"someservice//name\\/with\\/slashes@REALM.COM")
+
+    realm_name = principal.realm
+    assert realm_name == b"REALM.COM"
+
+    components = principal.components
+    assert len(components) == 3
+    assert components[0] == b"someservice"
+    assert components[1] == b""
+    assert components[2] == b"name/with/slashes"
+
+    ty = principal.type
+    assert ty == krb5.NameType.unknown or ty == krb5.NameType.principal
+
+
+def test_name_type() -> None:
+    unknown_name_type = krb5.NameType(200)
+    assert unknown_name_type.name == "Unknown_NameType_200"
+    assert unknown_name_type.value == 200
+
+    unknown_neg_name_type = krb5.NameType(-300)
+    assert unknown_neg_name_type.name == "Unknown_NameType_m300"
+    assert unknown_neg_name_type.value == -300
+
+    assert krb5.NameType(4) is krb5.NameType.srv_xhst
+
+    ctx = krb5.init_context()
+    principal = krb5.build_principal(ctx, b"REALM.COM", [b"component"])
+    principal.type = krb5.NameType(-300)
+    assert principal.type is unknown_neg_name_type
+
+
+def test_build_principal() -> None:
+    ctx = krb5.init_context()
+    principal = krb5.build_principal(ctx, b"REALM.COM", [b"someservice", b"", b"name/with/slashes"])
+
+    name = principal.name
+    assert name == b"someservice//name\\/with\\/slashes@REALM.COM"
+
+    realm_name = principal.realm
+    assert realm_name == b"REALM.COM"
+
+    components = principal.components
+    assert len(components) == 3
+    assert components[0] == b"someservice"
+    assert components[1] == b""
+    assert components[2] == b"name/with/slashes"
+
+    ty = principal.type
+    assert ty == krb5.NameType.principal
+
+    principal = krb5.build_principal(ctx, b"REALM.COM", [b"krbtgt", b"REALM.COM"])
+
+    name = principal.name
+    assert name == b"krbtgt/REALM.COM@REALM.COM"
+
+    ty = principal.type
+    assert ty == krb5.NameType.srv_inst
+
+    principal = krb5.build_principal(ctx, b"WELLKNOWN:ANONYMOUS", [b"WELLKNOWN", b"ANONYMOUS"])
+
+    name = principal.name
+    assert name == b"WELLKNOWN/ANONYMOUS@WELLKNOWN:ANONYMOUS"
+
+    ty = principal.type
+    assert ty == krb5.NameType.wellknown
+
+
+def test_principal_nul(realm: k5test.K5Realm) -> None:
+    if realm.provider.lower() == "heimdal":
+        pytest.skip("Heimdal does not support NUL bytes in realm or principal component strigns")
+
+    ctx = krb5.init_context()
+    principal = krb5.build_principal(ctx, b"REALM\0.COM", [b"some\0service", b"", b"name/with/slashes"])
+
+    name = principal.name
+    assert name == b"some\\0service//name\\/with\\/slashes@REALM\\0.COM"
+
+    realm_name = principal.realm
+    assert realm_name == b"REALM\0.COM"
+
+    components = principal.components
+    assert len(components) == 3
+    assert components[0] == b"some\0service"
+    assert components[1] == b""
+    assert components[2] == b"name/with/slashes"
+
+    principal = krb5.parse_name_flags(ctx, b"some\\0service//name\\/with\\/slashes@REALM\\0.COM")
+
+    realm_name = principal.realm
+    assert realm_name == b"REALM\0.COM"
+
+    components = principal.components
+    assert len(components) == 3
+    assert components[0] == b"some\0service"
+    assert components[1] == b""
+    assert components[2] == b"name/with/slashes"
