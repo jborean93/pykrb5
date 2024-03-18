@@ -228,6 +228,7 @@ if not SKIP_EXTENSIONS:
         ("creds_opt_set_pac_request", "krb5_get_init_creds_opt_set_pac_request"),
         "exceptions",
         "keyblock",
+        ("keyblock_mit", "krb5_c_string_to_key_with_params"),
         "kt",
         ("kt_mit", "krb5_kt_dup"),
         ("kt_heimdal", "krb5_kt_get_full_name"),

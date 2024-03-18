@@ -170,10 +170,11 @@ else:
 
 
 try:
-    from krb5._creds_mit import get_validated_creds
+    from krb5._creds_mit import get_etype_info, get_validated_creds
 except ImportError:
     pass
 else:
+    __all__.append("get_etype_info")
     __all__.append("get_validated_creds")
 
 
@@ -252,6 +253,14 @@ except ImportError:
     pass
 else:
     __all__.append("get_init_creds_opt_set_pac_request")
+
+
+try:
+    from krb5._keyblock_mit import c_string_to_key
+except ImportError:
+    pass
+else:
+    __all__.append("c_string_to_key")
 
 
 try:
