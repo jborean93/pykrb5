@@ -1,6 +1,7 @@
 # Copyright: (c) 2021 Jordan Borean (@jborean93) <jborean93@gmail.com>
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
+import pathlib
 import time
 import typing
 
@@ -219,3 +220,31 @@ def test_validate_creds(realm: k5test.K5Realm) -> None:
     assert new_creds.client.name == realm.user_princ.encode()
     assert new_creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
     # Ticket flags for new_creds should have TKT_FLG_POSTDATED set and TKT_FLG_INVALID cleared
+
+
+@pytest.mark.requires_api("get_etype_info")
+def test_get_etype_info(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
+    ctx = krb5.init_context()
+    princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
+
+    # Get information about etype, salt and s2kparams for the principal
+    etype, salt, s2kparams = krb5.get_etype_info(ctx, princ)
+
+    # Check whether the KDC returned the etype-info
+    if salt is None:
+        raise Exception("Failed to get etype-info")
+
+    # Use the string-to-key function to get the user's key
+    kb = krb5.c_string_to_key(ctx, etype, realm.password("user").encode(), salt, s2kparams)
+
+    # Write the key into a keytab
+    kt = krb5.kt_resolve(ctx, f"FILE:{tmp_path / 'keytab'}".encode())
+    krb5.kt_add_entry(ctx, kt, princ, 1, 0, kb)
+
+    # Get credentials using this keytab
+    opt = krb5.get_init_creds_opt_alloc(ctx)
+    creds = krb5.get_init_creds_keytab(ctx, princ, opt, kt)
+
+    # Verify the credentials
+    assert creds.client.name == realm.user_princ.encode()
+    assert creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
