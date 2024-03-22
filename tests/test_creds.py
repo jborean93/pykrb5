@@ -30,6 +30,26 @@ class MockPrompt(krb5.Krb5Prompt):
         return self._responses.pop(0)
 
 
+def test_TicketFlags() -> None:
+    # proxy (1 << 4) and two unknown flags (1 << 24 and 1 << 31) set
+    flags = krb5.TicketFlags(0x81000010)
+
+    assert krb5.TicketFlags.proxy in flags
+    assert krb5.TicketFlags.forwarded not in flags
+
+    # Clear proxy and forwarded, leave unknown flags intact
+    flags = flags & ~(krb5.TicketFlags.proxy | krb5.TicketFlags.forwarded)
+    assert krb5.TicketFlags.proxy not in flags
+    assert krb5.TicketFlags.forwarded not in flags
+    assert flags == 0x81000000
+    assert type(flags) == krb5.TicketFlags
+
+    flags = flags | krb5.TicketFlags.postdated
+    assert krb5.TicketFlags.postdated in flags
+    assert flags == 0x81000040
+    assert type(flags) == krb5.TicketFlags
+
+
 def test_get_init_creds_keytab(realm: k5test.K5Realm) -> None:
     ctx = krb5.init_context()
     princ = krb5.parse_name_flags(ctx, realm.host_princ.encode())
@@ -44,7 +64,7 @@ def test_get_init_creds_keytab(realm: k5test.K5Realm) -> None:
     assert creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
     assert len(creds.keyblock.data) > 0
     assert str(creds.times).startswith("TicketTimes(authtime=")
-    # creds.ticket_flags
+    assert krb5.TicketFlags.initial in creds.ticket_flags
     # creds.addresses
     assert len(creds.ticket) > 0
     assert creds.second_ticket == b""
@@ -168,6 +188,18 @@ def test_renew_creds(realm: k5test.K5Realm) -> None:
 
     assert creds.client.name == realm.user_princ.encode()
     assert creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+    assert krb5.TicketFlags.initial in creds.ticket_flags
+    assert krb5.TicketFlags.renewable in creds.ticket_flags
+
+    flags_raw = creds.ticket_flags_raw
+    flags_raw_reversed = 0
+    for i in range(32):
+        if flags_raw & (1 << i):
+            flags_raw_reversed |= 1 << (31 - i)
+    if realm.provider.lower() == "heimdal":
+        assert creds.ticket_flags == flags_raw
+    else:
+        assert creds.ticket_flags == flags_raw_reversed
 
     cc = krb5.cc_new_unique(ctx, b"MEMORY")
     krb5.cc_initialize(ctx, cc, princ)
@@ -176,10 +208,16 @@ def test_renew_creds(realm: k5test.K5Realm) -> None:
     new_creds = krb5.get_renewed_creds(ctx, creds.client, cc)
     assert new_creds.client.name == realm.user_princ.encode()
     assert new_creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+    if realm.provider.lower() == "heimdal":
+        # The MIT KDC seems to return renewed tickets with the 'initial' flag
+        # set.
+        assert krb5.TicketFlags.initial not in new_creds.ticket_flags
 
     new_creds = krb5.get_renewed_creds(ctx, creds.client, cc, b"krbtgt/KRBTEST.COM@KRBTEST.COM")
     assert new_creds.client.name == realm.user_princ.encode()
     assert new_creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+    if realm.provider.lower() == "heimdal":
+        assert krb5.TicketFlags.initial not in new_creds.ticket_flags
 
 
 @pytest.mark.requires_api("get_validated_creds")
@@ -189,10 +227,12 @@ def test_validate_creds(realm: k5test.K5Realm) -> None:
     opt = krb5.get_init_creds_opt_alloc(ctx)
     # Get postdated ticket, ticket will be valid after 1s
     creds = krb5.get_init_creds_password(ctx, princ, opt, realm.password("user").encode(), start_time=1)
-    # Ticket flags for creds should have TKT_FLG_POSTDATED and TKT_FLG_INVALID set
 
     assert creds.client.name == realm.user_princ.encode()
     assert creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+    # Ticket flags for creds should have TKT_FLG_POSTDATED and TKT_FLG_INVALID set
+    assert krb5.TicketFlags.postdated in creds.ticket_flags
+    assert krb5.TicketFlags.invalid in creds.ticket_flags
 
     cc = krb5.cc_new_unique(ctx, b"MEMORY")
     krb5.cc_initialize(ctx, cc, princ)
@@ -215,11 +255,15 @@ def test_validate_creds(realm: k5test.K5Realm) -> None:
     assert new_creds.client.name == realm.user_princ.encode()
     assert new_creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
     # Ticket flags for new_creds should have TKT_FLG_POSTDATED set and TKT_FLG_INVALID cleared
+    assert krb5.TicketFlags.postdated in new_creds.ticket_flags
+    assert krb5.TicketFlags.invalid not in new_creds.ticket_flags
 
     new_creds = krb5.get_validated_creds(ctx, creds.client, cc, b"krbtgt/KRBTEST.COM@KRBTEST.COM")
     assert new_creds.client.name == realm.user_princ.encode()
     assert new_creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
     # Ticket flags for new_creds should have TKT_FLG_POSTDATED set and TKT_FLG_INVALID cleared
+    assert krb5.TicketFlags.postdated in new_creds.ticket_flags
+    assert krb5.TicketFlags.invalid not in new_creds.ticket_flags
 
 
 @pytest.mark.requires_api("get_etype_info")
