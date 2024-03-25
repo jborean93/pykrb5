@@ -1,6 +1,7 @@
 # Copyright: (c) 2021 Jordan Borean (@jborean93) <jborean93@gmail.com>
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
+import krb5._win_config
 from krb5._ccache import (
     CCache,
     CredentialsRetrieveFlags,
