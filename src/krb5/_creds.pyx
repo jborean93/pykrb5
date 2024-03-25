@@ -2,6 +2,7 @@
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
 import collections
+import enum
 import typing
 
 from krb5._exceptions import Krb5Error
@@ -25,6 +26,7 @@ cdef extern from "python_krb5.h":
         krb5_principal *server,
         krb5_keyblock **keyblock,
         pykrb5_ticket_times *times,
+        uint32_t *ticket_flags_raw,
         uint32_t *ticket_flags,
         // krb5_address ***addresses,
         krb5_data *ticket,
@@ -41,9 +43,18 @@ cdef extern from "python_krb5.h":
 #endif
         if (times != NULL) *times = creds->times;
 #if defined(HEIMDAL_XFREE)
+        if (ticket_flags_raw != NULL) *ticket_flags_raw = creds->flags.i;
         if (ticket_flags != NULL) *ticket_flags = creds->flags.i;
 #else
-        if (ticket_flags != NULL) *ticket_flags = creds->ticket_flags;
+        if (ticket_flags_raw != NULL) *ticket_flags_raw = creds->ticket_flags;
+        if (ticket_flags != NULL) {
+            *ticket_flags = 0;
+            // Reverse the order of the bits to get the first bit in the
+            // lowermost bit instead of in the uppermost bit.
+            for (int i = 0; i < 32; i++) {
+                if (creds->ticket_flags & (1 << (31 - i))) *ticket_flags |= (1 << i);
+            }
+        }
 #endif
         // if (addresses != NULL) *addresses = creds->addresses;
         if (ticket != NULL) *ticket = creds->ticket;
@@ -58,6 +69,7 @@ cdef extern from "python_krb5.h":
         krb5_principal *server,
         krb5_keyblock **keyblock,
         pykrb5_ticket_times *times,
+        uint32_t *ticket_flags_raw,
         uint32_t *ticket_flags,
         # krb5_address ***addresses,
         krb5_data *ticket,
@@ -139,6 +151,31 @@ cdef extern from "python_krb5.h":
     ) nogil
 
 
+class TicketFlags(enum.IntFlag):
+    # https://github.com/krb5/krb5-assignments/blob/master/ticket-flags
+    reserved = 1 << 0
+    forwardable = 1 << 1
+    forwarded = 1 << 2
+    proxiable = 1 << 3
+    proxy = 1 << 4
+    may_postdate = 1 << 5
+    postdated = 1 << 6
+    invalid = 1 << 7
+    renewable = 1 << 8
+    initial = 1 << 9
+    pre_authent = 1 << 10
+    hw_authent = 1 << 11
+    transited_policy_checked = 1 << 12
+    ok_as_delegate = 1 << 13
+    enc_pa_rep = 1 << 15
+    anonymous = 1 << 16
+
+    # This is to prevent python >= 3.11 from clearing unknown flags when doing:
+    # flags = flags & ~TicketFlags.forwarded
+    # (Under python 3.11, ~TicketFlags.forwarded will contain only known flags.)
+    _all_flags = (1 << 32) - 1
+
+
 cdef class Creds:
     # cdef Context ctx
     # cdef krb5_creds raw
@@ -159,7 +196,7 @@ cdef class Creds:
     @property
     def client(Creds self) -> Principal:
         princ = Principal(self.ctx, 0, needs_free=0)
-        pykrb5_creds_get(&self.raw, &princ.raw, NULL, NULL, NULL, NULL, NULL, NULL)
+        pykrb5_creds_get(&self.raw, &princ.raw, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
 
         # Create a copy of the principal to make sure the returned value
         # remains valid even if the Creds object is destroyed
@@ -170,7 +207,7 @@ cdef class Creds:
     @property
     def server(Creds self) -> Principal:
         princ = Principal(self.ctx, 0, needs_free=0)
-        pykrb5_creds_get(&self.raw, NULL, &princ.raw, NULL, NULL, NULL, NULL, NULL)
+        pykrb5_creds_get(&self.raw, NULL, &princ.raw, NULL, NULL, NULL, NULL, NULL, NULL)
 
         # Create a copy of the principal to make sure the returned value
         # remains valid even if the Creds object is destroyed
@@ -181,7 +218,7 @@ cdef class Creds:
     @property
     def keyblock(Creds self) -> KeyBlock:
         kb = KeyBlock(self.ctx, needs_free=0)
-        pykrb5_creds_get(&self.raw, NULL, NULL, &kb.raw, NULL, NULL, NULL, NULL)
+        pykrb5_creds_get(&self.raw, NULL, NULL, &kb.raw, NULL, NULL, NULL, NULL, NULL)
 
         # Create a copy of the keyblock to make sure the returned value
         # remains valid even if the Creds object is destroyed
@@ -192,21 +229,28 @@ cdef class Creds:
     @property
     def times(Creds self) -> TicketTimes:
         cdef pykrb5_ticket_times times
-        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, &times, NULL, NULL, NULL)
+        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, &times, NULL, NULL, NULL, NULL)
 
         return TicketTimes(times.authtime, times.starttime, times.endtime, times.renew_till)
 
-    # @property
-    # def ticket_flags(Creds self) -> int:
-    #     cdef uint32_t flags
-    #     pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, &flags, NULL, NULL)
+    @property
+    def ticket_flags_raw(Creds self) -> int:
+        cdef uint32_t flags_raw
+        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, &flags_raw, NULL, NULL, NULL)
 
-    #     return flags
+        return flags_raw
+
+    @property
+    def ticket_flags(Creds self) -> TicketFlags:
+        cdef uint32_t flags
+        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, NULL, &flags, NULL, NULL)
+
+        return TicketFlags(flags)
 
     @property
     def ticket(Creds self) -> bytes:
         cdef krb5_data ticket
-        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, NULL, &ticket, NULL)
+        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, NULL, NULL, &ticket, NULL)
 
         cdef size_t length
         cdef char *value
@@ -220,7 +264,7 @@ cdef class Creds:
     @property
     def second_ticket(Creds self) -> bytes:
         cdef krb5_data second_ticket
-        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, NULL, NULL, &second_ticket)
+        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &second_ticket)
 
         cdef size_t length
         cdef char *value
