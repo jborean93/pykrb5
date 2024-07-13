@@ -48,3 +48,25 @@ def get_etype_info(
 
         If there are no s2kparams in the provided etype-info, s2kparams is None.
     """
+
+def serialize_creds(context: Context, creds: Creds) -> bytes:
+    """Serialize creds in the format used by the FILE ccache format
+    (vesion 4) and KCM ccache protocol.
+
+    Args:
+        creds: Credentials to serialize.
+
+    Returns:
+        bytes: The serialized credentials.
+    """
+
+def unserialize_creds(context: Context, data: bytes) -> Creds:
+    """Deserialize creds from the format used by the FILE ccache format
+    (vesion 4) and KCM ccache protocol.
+
+    Args:
+        context: Krb5 context.
+        data: serialized credentials.
+    Returns:
+        Creds: The unserialized credentials.
+    """
