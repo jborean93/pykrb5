@@ -6,6 +6,9 @@ import typing
 
 from krb5._exceptions import Krb5Error
 
+from libc.stdlib cimport free
+from libc.string cimport memcpy
+
 from krb5._ccache cimport CCache
 from krb5._context cimport Context
 from krb5._creds cimport Creds
@@ -13,8 +16,6 @@ from krb5._creds_opt cimport GetInitCredsOpt
 from krb5._krb5_types cimport *
 from krb5._principal cimport Principal
 
-from libc.stdlib cimport free
-from libc.string cimport memcpy
 
 cdef extern from "python_krb5.h":
     """

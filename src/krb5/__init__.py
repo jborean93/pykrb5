@@ -172,7 +172,12 @@ else:
 
 
 try:
-    from krb5._creds_mit import get_etype_info, get_validated_creds, serialize_creds, unserialize_creds
+    from krb5._creds_mit import (
+        get_etype_info,
+        get_validated_creds,
+        serialize_creds,
+        unserialize_creds,
+    )
 except ImportError:
     pass
 else:
