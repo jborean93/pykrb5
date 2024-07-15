@@ -292,3 +292,31 @@ def test_get_etype_info(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
     # Verify the credentials
     assert creds.client.name == realm.user_princ.encode()
     assert creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
+
+
+@pytest.mark.requires_api("marshal_credentials")
+def test_creds_serialization(realm: k5test.K5Realm) -> None:
+    ctx = krb5.init_context()
+    princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
+    opt = krb5.get_init_creds_opt_alloc(ctx)
+    creds = krb5.get_init_creds_password(ctx, princ, opt, realm.password("user").encode())
+    assert isinstance(creds, krb5.Creds)
+
+    with pytest.raises(krb5.Krb5Error):
+        krb5.unmarshal_credentials(ctx, b"invalid")
+
+    with pytest.raises(krb5.Krb5Error):
+        krb5.unmarshal_credentials(ctx, b"")
+
+    bytes = krb5.marshal_credentials(ctx, creds)
+    assert len(bytes) > 0
+
+    uncreds = krb5.unmarshal_credentials(ctx, bytes)
+    assert isinstance(uncreds, krb5.Creds)
+    assert str(uncreds) == "Creds"
+
+    assert id(creds) != id(uncreds)
+    assert creds.client.name == uncreds.client.name
+    assert creds.ticket == uncreds.ticket
+    assert creds.keyblock.data == uncreds.keyblock.data
+    assert creds.times.endtime == uncreds.times.endtime

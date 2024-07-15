@@ -6,6 +6,8 @@ import typing
 
 from krb5._exceptions import Krb5Error
 
+from libc.string cimport memcpy
+
 from krb5._ccache cimport CCache
 from krb5._context cimport Context
 from krb5._creds cimport Creds
@@ -17,7 +19,11 @@ from krb5._principal cimport Principal
 cdef extern from "python_krb5.h":
     """
 #if defined(HEIMDAL_XFREE)
-#error "Heimdal implementation of krb5_get_validated_creds() does not work"
+#error "Heimdal implementation does not support MIT-specific calls:"
+#error " krb5_get_validated_creds()"
+#error " krb5_get_etype_info()"
+#error " krb5_marshal_credentials()"
+#error " krb5_unmarshal_credentials()"
 #endif
     """
 
@@ -38,6 +44,22 @@ cdef extern from "python_krb5.h":
         krb5_data *s2kparams_ou,
     ) nogil
 
+    krb5_error_code krb5_marshal_credentials(
+        krb5_context context,
+        krb5_creds *creds,
+        krb5_data **data
+    ) nogil
+
+    krb5_error_code krb5_unmarshal_credentials(
+        krb5_context context,
+        krb5_data *data,
+        krb5_creds **creds,
+    ) nogil
+
+    void krb5_free_data(
+        krb5_context context,
+        krb5_data *val,
+    ) nogil
 
 def get_validated_creds(
     Context context not None,
@@ -120,3 +142,53 @@ EtypeInfo = collections.namedtuple('EtypeInfo', [
     'salt',
     's2kparams',
 ])
+
+def marshal_credentials(Context context not None, Creds creds not None) -> bytes:
+    cdef krb5_error_code err = 0
+    cdef krb5_data *data = NULL
+    cdef size_t length
+    cdef char *value
+
+    try:
+        err = krb5_marshal_credentials(context.raw, &creds.raw, &data)
+
+        if err:
+            raise Krb5Error(context, err)
+
+        pykrb5_get_krb5_data(data, &length, &value)
+
+        if length == 0:
+            data_bytes = b""
+        else:
+            data_bytes = value[:length]
+
+        return data_bytes
+
+    finally:
+        if NULL != data:
+            krb5_free_data(context.raw, data)
+
+def unmarshal_credentials(Context context not None, const unsigned char[:] data not None) -> Creds:
+    cdef krb5_error_code err = 0
+    cdef krb5_data data_raw
+
+    creds = Creds(context)
+
+    if len(data) == 0:
+        pykrb5_set_krb5_data(&data_raw, 0, "")
+    else:
+        pykrb5_set_krb5_data(&data_raw, len(data), <char *>&data[0])
+
+    err = krb5_unmarshal_credentials(context.raw, &data_raw, &creds._raw_ptr)
+
+    if creds._raw_ptr:
+        # creds_raw was calloc'ed for krb5_creds structure
+        # "shallow copy" the structure
+        memcpy(&creds.raw, creds._raw_ptr, sizeof(creds.raw))
+        # mark "deep copy" for future deallocation
+        creds.needs_free = 1
+
+    if err:
+        raise Krb5Error(context, err)
+
+    return creds
