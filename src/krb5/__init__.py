@@ -175,16 +175,16 @@ try:
     from krb5._creds_mit import (
         get_etype_info,
         get_validated_creds,
-        serialize_creds,
-        unserialize_creds,
+        marshal_credentials,
+        unmarshal_credentials,
     )
 except ImportError:
     pass
 else:
     __all__.append("get_etype_info")
     __all__.append("get_validated_creds")
-    __all__.append("serialize_creds")
-    __all__.append("unserialize_creds")
+    __all__.append("marshal_credentials")
+    __all__.append("unmarshal_credentials")
 
 
 try:

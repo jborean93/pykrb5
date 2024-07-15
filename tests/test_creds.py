@@ -303,15 +303,15 @@ def test_creds_serialization(realm: k5test.K5Realm) -> None:
     assert isinstance(creds, krb5.Creds)
 
     with pytest.raises(krb5.Krb5Error):
-        krb5.unserialize_creds(ctx, b"invalid")
+        krb5.unmarshal_credentials(ctx, b"invalid")
 
     with pytest.raises(krb5.Krb5Error):
-        krb5.unserialize_creds(ctx, b"")
+        krb5.unmarshal_credentials(ctx, b"")
 
-    bytes = krb5.serialize_creds(ctx, creds)
+    bytes = krb5.marshal_credentials(ctx, creds)
     assert len(bytes) > 0
 
-    uncreds = krb5.unserialize_creds(ctx, bytes)
+    uncreds = krb5.unmarshal_credentials(ctx, bytes)
     assert isinstance(uncreds, krb5.Creds)
     assert str(uncreds) == "Creds"
 
