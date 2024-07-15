@@ -1,8 +1,36 @@
 # Changelog
 
-## 0.5.2 - TBD
+## 0.6.0 - TBD
 
 * Fix up wheel package build to not include uneeded `python_krb5.h` file in the final `site-packages` install dir
+* Added CCache APIs:
+  * [krb5_cc_get_config](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_cc_get_config.html)
+  * [krb5_cc_set_config](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_cc_set_config.html)
+* Added Context APIs:
+  * [krb5_set_real_time](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_set_real_time.html)
+  * [krb5_timeofday](https://web.mit.edu/Kerberos/krb5-devel/doc/appdev/refs/api/krb5_timeofday.html)
+  * [krb5_us_timeofday](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_us_timeofday.html)
+  * MIT only
+  * [krb5_get_time_offsets](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_get_time_offsets.html)
+* Added Credential APIs:
+  * [krb5_get_renewed_creds](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_get_renewed_creds.html)
+  * MIT only
+  * [krb5_get_etype_info](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_get_etype_info.html)
+  * [krb5_get_validated_creds](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_get_validated_creds.html)
+  * [krb5_marshal_credentials](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_marshal_credentials.html)
+  * [krb5_unmarshal_credentials](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_unmarshal_credentials.html)
+* Added KeyBlock APIs:
+  * MIT only
+  * [krb5_c_string_to_key](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_c_string_to_key.html)
+* Added Principal APIs:
+  * [krb5_build_principal]https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_build_principal.html)
+* Added the following properties to the `Creds` object:
+  * `ticket_flags_raw` - Flags in the ticket as returned by the C API
+  * `ticket_flags` - Flags in the ticket converted to a known enum value
+* Added the following properties to the `Principal` object:
+  * `realm` - The realm of the principal
+  * `components` - The list of name components.
+  * `type` - The name type of the principal.
 
 ## 0.5.1 - 2023-08-29
 
