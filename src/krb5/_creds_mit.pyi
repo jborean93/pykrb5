@@ -49,9 +49,14 @@ def get_etype_info(
         If there are no s2kparams in the provided etype-info, s2kparams is None.
     """
 
-def marshal_credentials(context: Context, creds: Creds) -> bytes:
-    """Serialize creds in the format used by the FILE ccache format
-    (vesion 4) and KCM ccache protocol.
+def marshal_credentials(
+    context: Context,
+    creds: Creds,
+) -> bytes:
+    """Serialize creds.
+
+    Serialize credentials in the format used by the FILE ccache format
+    (version 4) and KCM ccache protocol.
 
     Args:
         context: Krb5 context.
@@ -61,13 +66,19 @@ def marshal_credentials(context: Context, creds: Creds) -> bytes:
         bytes: The serialized credentials.
     """
 
-def unmarshal_credentials(context: Context, data: bytes) -> Creds:
-    """Deserialize creds from the format used by the FILE ccache format
-    (vesion 4) and KCM ccache protocol.
+def unmarshal_credentials(
+    context: Context,
+    data: bytes,
+) -> Creds:
+    """Deserialize creds.
+
+    Deserialize credentials from the format used by the FILE ccache format
+    (version 4) and KCM ccache protocol.
 
     Args:
         context: Krb5 context.
         data: serialized credentials.
+
     Returns:
         Creds: The unserialized credentials.
     """
