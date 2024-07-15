@@ -315,3 +315,6 @@ def test_creds_serialization(realm: k5test.K5Realm) -> None:
     assert str(uncreds) == "Creds"
     assert id(creds) != id(uncreds)
     assert creds.client.name == uncreds.client.name
+    assert creds.ticket == uncreds.ticket
+    assert creds.keyblock.data == uncreds.keyblock.data
+    assert creds.times.endtime == uncreds.times.endtime
