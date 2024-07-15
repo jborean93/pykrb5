@@ -294,7 +294,7 @@ def test_get_etype_info(realm: k5test.K5Realm, tmp_path: pathlib.Path) -> None:
     assert creds.server.name == b"krbtgt/KRBTEST.COM@KRBTEST.COM"
 
 
-@pytest.mark.requires_api("serialize_creds")
+@pytest.mark.requires_api("marshal_credentials")
 def test_creds_serialization(realm: k5test.K5Realm) -> None:
     ctx = krb5.init_context()
     princ = krb5.parse_name_flags(ctx, realm.user_princ.encode())
@@ -312,7 +312,9 @@ def test_creds_serialization(realm: k5test.K5Realm) -> None:
     assert len(bytes) > 0
 
     uncreds = krb5.unserialize_creds(ctx, bytes)
+    assert isinstance(uncreds, krb5.Creds)
     assert str(uncreds) == "Creds"
+
     assert id(creds) != id(uncreds)
     assert creds.client.name == uncreds.client.name
     assert creds.ticket == uncreds.ticket
