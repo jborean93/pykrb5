@@ -25,14 +25,6 @@ cdef extern from "python_krb5.h":
 #error " krb5_get_etype_info()"
 #error " krb5_marshal_credentials()"
 #error " krb5_unmarshal_credentials()"
-#else
-    void pykrb5_free_data(
-        krb5_context context,
-        krb5_data *val
-    )
-    {
-        krb5_free_data(context, val);
-    }
 #endif
     """
 
@@ -65,7 +57,7 @@ cdef extern from "python_krb5.h":
         krb5_creds **creds,
     ) nogil
 
-    void pykrb5_free_data(
+    void krb5_free_data(
         krb5_context context,
         krb5_data *val,
     ) nogil
@@ -152,14 +144,14 @@ EtypeInfo = collections.namedtuple('EtypeInfo', [
     's2kparams',
 ])
 
-def serialize_creds(Context context not None, Creds self not None) -> bytes:
+def marshal_credentials(Context context not None, Creds creds not None) -> bytes:
     cdef krb5_error_code err = 0
     cdef krb5_data *data = NULL
     cdef size_t length
     cdef char *value
 
     try:
-        err = krb5_marshal_credentials(context.raw, &self.raw, &data)
+        err = krb5_marshal_credentials(context.raw, &creds.raw, &data)
 
         if err:
             raise Krb5Error(context, err)
@@ -175,11 +167,10 @@ def serialize_creds(Context context not None, Creds self not None) -> bytes:
 
     finally:
         if NULL != data:
-            pykrb5_free_data(context.raw, data)
+            krb5_free_data(context.raw, data)
 
-def unserialize_creds(Context context not None, const unsigned char[:] data not None) -> Creds:
+def unmarshal_credentials(Context context not None, const unsigned char[:] data not None) -> Creds:
     cdef krb5_error_code err = 0
-    cdef krb5_creds *creds_raw = NULL
     cdef krb5_data data_raw
 
     creds = Creds(context)
@@ -189,13 +180,12 @@ def unserialize_creds(Context context not None, const unsigned char[:] data not 
     else:
         pykrb5_set_krb5_data(&data_raw, len(data), <char *>&data[0])
 
-    err = krb5_unmarshal_credentials(context.raw, &data_raw, &creds_raw)
+    err = krb5_unmarshal_credentials(context.raw, &data_raw, &creds._raw_ptr)
 
-    if creds_raw:
+    if creds._raw_ptr:
         # creds_raw was calloc'ed for krb5_creds structure
-        # "shallow copy" the structure and free it
-        memcpy(&creds.raw, creds_raw, sizeof(creds.raw))
-        free(creds_raw)
+        # "shallow copy" the structure
+        memcpy(&creds.raw, creds._raw_ptr, sizeof(creds.raw))
         # mark "deep copy" for future deallocation
         creds.needs_free = 1
 

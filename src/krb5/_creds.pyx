@@ -77,6 +77,11 @@ cdef extern from "python_krb5.h":
         # krb5_authdata ***authdata,
     ) nogil
 
+    void krb5_free_creds(
+        krb5_context context,
+        krb5_creds *val,
+    ) nogil
+
     void krb5_free_cred_contents(
         krb5_context context,
         krb5_creds *val,
@@ -179,15 +184,20 @@ class TicketFlags(enum.IntFlag):
 cdef class Creds:
     # cdef Context ctx
     # cdef krb5_creds raw
+    # cdef krb5_creds* _raw_ptr
     # cdef int needs_free
 
     def __cinit__(Creds self, Context context):
         self.ctx = context
         self.needs_free = 0
+        self._raw_ptr = NULL
 
     def __dealloc__(Creds self):
         if self.needs_free:
-            krb5_free_cred_contents(self.ctx.raw, &self.raw)
+            if NULL != self._raw_ptr:
+                krb5_free_creds(self.ctx.raw, self._raw_ptr)
+            else:
+                krb5_free_cred_contents(self.ctx.raw, &self.raw)
             self.needs_free = 0
 
     def __str__(Creds self) -> str:
