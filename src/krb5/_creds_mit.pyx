@@ -6,7 +6,6 @@ import typing
 
 from krb5._exceptions import Krb5Error
 
-from libc.stdlib cimport free
 from libc.string cimport memcpy
 
 from krb5._ccache cimport CCache
