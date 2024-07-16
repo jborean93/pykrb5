@@ -321,10 +321,14 @@ def test_cc_retrieve_remove_cred(realm: k5test.K5Realm, tmp_path: pathlib.Path) 
 
     krb5.cc_retrieve_cred(ctx, cc, krb5.CredentialsRetrieveFlags.match_srv_nameonly, creds)
 
-    krb5.cc_remove_cred(ctx, cc, krb5.CredentialsRetrieveFlags.match_srv_nameonly, creds)
+    if (realm.provider.lower() == "heimdal" and platform.system() == "Linux") or os.environ.get(
+        "DEBIAN_VERSION", None
+    ) == "10":
+        # Removing credentials does not seem to have an effect with heimdal on Linux
+        # Debian 10's version of krb5 MIT does not support remove_cred on the FILE ccache.
+        return
 
-    if realm.provider.lower() == "heimdal" and platform.system() == "Linux":
-        pytest.skip("Removing credentials does not seem to have an effect with heimdal on Linux")
+    krb5.cc_remove_cred(ctx, cc, krb5.CredentialsRetrieveFlags.match_srv_nameonly, creds)
 
     msg_pattern = "Matching credential not found|End of credential cache reached|Did not find credential for"
     with pytest.raises(krb5.Krb5Error, match=msg_pattern):

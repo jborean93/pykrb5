@@ -1,7 +1,13 @@
 #!/bin/bash -ex
 
-# Run with 'KRB5_PROVIDER=heimdal build_helpers/run-container.sh' to run tests
-# against Heimdal.
+# KRB5_PROVIDER and DEBIAN_VERSION can be set to run tests against different
+# versions. A full test suite before release should be run with
+# DEBIAN_VERSION=10 KRB5_PROVIDER=mit build_helpers/run-container.sh
+# DEBIAN_VERSION=10 KRB5_PROVIDER=heimdal build_helpers/run-container.sh
+# DEBIAN_VERSION=11 KRB5_PROVIDER=mit build_helpers/run-container.sh
+# DEBIAN_VERSION=12 KRB5_PROVIDER=mit build_helpers/run-container.sh
+
+export DEBIAN_VERSION="${DEBIAN_VERSION:-10}"
 
 docker run \
     --rm \
@@ -10,7 +16,8 @@ docker run \
     --volume "$( pwd )":/tmp/build:z \
     --workdir /tmp/build \
     --env KRB5_PROVIDER=${KRB5_PROVIDER:-mit} \
-    debian:10 /bin/bash -ex -c 'source /dev/stdin' << 'EOF'
+    --env DEBIAN_VERSION=${DEBIAN_VERSION} \
+    debian:${DEBIAN_VERSION} /bin/bash -ex -c 'source /dev/stdin' << 'EOF'
 
 source ./build_helpers/lib.sh
 lib::setup::system_requirements
@@ -18,7 +25,14 @@ lib::setup::system_requirements
 apt-get -y install \
     python3 \
     python3-{dev,pip,venv}
-ln -s /usr/bin/python3 /usr/bin/python
+
+. /etc/os-release
+if [ "$VERSION_ID" = "10" ]; then
+    ln -s /usr/bin/python3 /usr/bin/python
+else
+    python3 -m venv .venv
+    source .venv/bin/activate
+fi
 
 python -m pip install build
 python -m build

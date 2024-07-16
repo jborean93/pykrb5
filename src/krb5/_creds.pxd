@@ -7,9 +7,12 @@ from krb5._krb5_types cimport *
 
 cdef class Creds:
     cdef Context ctx
-    cdef krb5_creds raw
-    cdef krb5_creds* _raw_ptr
-    cdef int needs_free
+    cdef int free_contents
+    cdef krb5_creds* _raw
+    cdef int _free_raw
+
+    cdef void* set_raw_from_lib(Creds self, krb5_creds* raw)
+    cdef krb5_creds *get_pointer(Creds self)
 
 
 cdef class InitCredsContext:

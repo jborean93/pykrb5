@@ -220,6 +220,7 @@ if not SKIP_EXTENSIONS:
         "context",
         ("context_mit", "krb5_init_secure_context"),
         "creds",
+        ("creds_marshal_mit", "krb5_marshal_credentials"),
         ("creds_mit", "krb5_get_etype_info"),
         "creds_opt",
         ("creds_opt_heimdal", "krb5_get_init_creds_opt_set_default_flags"),
