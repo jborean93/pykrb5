@@ -10,7 +10,7 @@ Due to the complex nature of this API it is highly recommended to use something 
 ## Requirements
 
 * An implementation of the Kerberos 5 API - including the header files
-  * [MIT Kebreros](https://web.mit.edu/kerberos/)
+  * [MIT Kebreros](https://web.mit.edu/kerberos/) - Minimum 1.17
   * [Heimdal](https://github.com/heimdal/heimdal)
 * A C compiler, such as GCC
 * Python 3.6+

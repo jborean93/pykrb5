@@ -17,6 +17,7 @@
   * MIT only
   * [krb5_get_etype_info](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_get_etype_info.html)
   * [krb5_get_validated_creds](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_get_validated_creds.html)
+  * MIT 1.20+ only
   * [krb5_marshal_credentials](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_marshal_credentials.html)
   * [krb5_unmarshal_credentials](https://web.mit.edu/kerberos/krb5-devel/doc/appdev/refs/api/krb5_unmarshal_credentials.html)
 * Added KeyBlock APIs:

@@ -172,17 +172,18 @@ else:
 
 
 try:
-    from krb5._creds_mit import (
-        get_etype_info,
-        get_validated_creds,
-        marshal_credentials,
-        unmarshal_credentials,
-    )
+    from krb5._creds_mit import get_etype_info, get_validated_creds
 except ImportError:
     pass
 else:
     __all__.append("get_etype_info")
     __all__.append("get_validated_creds")
+
+try:
+    from krb5._creds_marshal_mit import marshal_credentials, unmarshal_credentials
+except ImportError:
+    pass
+else:
     __all__.append("marshal_credentials")
     __all__.append("unmarshal_credentials")
 

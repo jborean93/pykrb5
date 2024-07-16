@@ -9,6 +9,8 @@ from krb5._exceptions import Krb5Error
 from krb5._keyblock import copy_keyblock
 from krb5._principal import copy_principal
 
+from libc.stdlib cimport calloc, free
+
 from krb5._ccache cimport CCache
 from krb5._context cimport Context
 from krb5._creds_opt cimport GetInitCredsOpt
@@ -183,30 +185,61 @@ class TicketFlags(enum.IntFlag):
 
 cdef class Creds:
     # cdef Context ctx
-    # cdef krb5_creds raw
-    # cdef krb5_creds* _raw_ptr
-    # cdef int needs_free
+    # cdef int free_contents
+    # cdef krb5_creds* _raw
+    # cdef int _free_raw
 
     def __cinit__(Creds self, Context context):
         self.ctx = context
-        self.needs_free = 0
-        self._raw_ptr = NULL
+        self.free_contents = 0
+        self._raw = NULL
+        self._free_raw = 0
 
     def __dealloc__(Creds self):
-        if self.needs_free:
-            if NULL != self._raw_ptr:
-                krb5_free_creds(self.ctx.raw, self._raw_ptr)
-            else:
-                krb5_free_cred_contents(self.ctx.raw, &self.raw)
-            self.needs_free = 0
+        if not self._raw:
+            return
+
+        if self._free_raw:
+            if self.free_contents:
+                krb5_free_cred_contents(self.ctx.raw, self._raw)
+                self.free_contents = 0
+            free(self._raw)
+
+        else:
+            krb5_free_creds(self.ctx.raw, self._raw)
+
+        self._raw = NULL
+        self._free_raw = 0
 
     def __str__(Creds self) -> str:
         return "Creds"
 
+    cdef void* set_raw_from_lib(Creds self, krb5_creds* raw):
+        # This is called when the krb5_creds* was allocated by the krb5 lib.
+        # We set the internal state so it calls krb5_free_creds properly on
+        # deallocation.
+        if self._raw:
+            # This should never occur but it's here just in case
+            raise ValueError("Cannot set raw pointer on already initialized Creds")
+
+        self._raw = raw
+        self._free_raw = 0
+
+    cdef krb5_creds *__c_value__(Creds self):
+        # If this is being called without _raw being set we want to manage
+        # the krb5_creds object in this class.
+        if not self._raw:
+            self._raw = <krb5_creds*>calloc(sizeof(krb5_creds), 1)
+            if not self._raw:
+                raise MemoryError("Cannot calloc krb5_creds")
+            self._free_raw = 1
+
+        return self._raw
+
     @property
     def client(Creds self) -> Principal:
         princ = Principal(self.ctx, 0, needs_free=0)
-        pykrb5_creds_get(&self.raw, &princ.raw, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+        pykrb5_creds_get(self.__c_value__(), &princ.raw, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
 
         # Create a copy of the principal to make sure the returned value
         # remains valid even if the Creds object is destroyed
@@ -217,7 +250,7 @@ cdef class Creds:
     @property
     def server(Creds self) -> Principal:
         princ = Principal(self.ctx, 0, needs_free=0)
-        pykrb5_creds_get(&self.raw, NULL, &princ.raw, NULL, NULL, NULL, NULL, NULL, NULL)
+        pykrb5_creds_get(self.__c_value__(), NULL, &princ.raw, NULL, NULL, NULL, NULL, NULL, NULL)
 
         # Create a copy of the principal to make sure the returned value
         # remains valid even if the Creds object is destroyed
@@ -228,7 +261,7 @@ cdef class Creds:
     @property
     def keyblock(Creds self) -> KeyBlock:
         kb = KeyBlock(self.ctx, needs_free=0)
-        pykrb5_creds_get(&self.raw, NULL, NULL, &kb.raw, NULL, NULL, NULL, NULL, NULL)
+        pykrb5_creds_get(self.__c_value__(), NULL, NULL, &kb.raw, NULL, NULL, NULL, NULL, NULL)
 
         # Create a copy of the keyblock to make sure the returned value
         # remains valid even if the Creds object is destroyed
@@ -239,28 +272,28 @@ cdef class Creds:
     @property
     def times(Creds self) -> TicketTimes:
         cdef pykrb5_ticket_times times
-        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, &times, NULL, NULL, NULL, NULL)
+        pykrb5_creds_get(self.__c_value__(), NULL, NULL, NULL, &times, NULL, NULL, NULL, NULL)
 
         return TicketTimes(times.authtime, times.starttime, times.endtime, times.renew_till)
 
     @property
     def ticket_flags_raw(Creds self) -> int:
         cdef uint32_t flags_raw
-        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, &flags_raw, NULL, NULL, NULL)
+        pykrb5_creds_get(self.__c_value__(), NULL, NULL, NULL, NULL, &flags_raw, NULL, NULL, NULL)
 
         return flags_raw
 
     @property
     def ticket_flags(Creds self) -> TicketFlags:
         cdef uint32_t flags
-        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, NULL, &flags, NULL, NULL)
+        pykrb5_creds_get(self.__c_value__(), NULL, NULL, NULL, NULL, NULL, &flags, NULL, NULL)
 
         return TicketFlags(flags)
 
     @property
     def ticket(Creds self) -> bytes:
         cdef krb5_data ticket
-        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, NULL, NULL, &ticket, NULL)
+        pykrb5_creds_get(self.__c_value__(), NULL, NULL, NULL, NULL, NULL, NULL, &ticket, NULL)
 
         cdef size_t length
         cdef char *value
@@ -274,7 +307,7 @@ cdef class Creds:
     @property
     def second_ticket(Creds self) -> bytes:
         cdef krb5_data second_ticket
-        pykrb5_creds_get(&self.raw, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &second_ticket)
+        pykrb5_creds_get(self.__c_value__(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, &second_ticket)
 
         cdef size_t length
         cdef char *value
@@ -364,6 +397,7 @@ def get_init_creds_keytab(
 ) -> Creds:
     creds = Creds(context)
     cdef krb5_error_code err = 0
+    cdef krb5_creds* raw_creds = creds.__c_value__()
 
     cdef const char *in_tkt_service_ptr = NULL
     if in_tkt_service is not None and len(in_tkt_service):
@@ -372,7 +406,7 @@ def get_init_creds_keytab(
     with nogil:
         err = krb5_get_init_creds_keytab(
             context.raw,
-            &creds.raw,
+            raw_creds,
             client.raw,
             keytab.raw,
             start_time,
@@ -383,7 +417,7 @@ def get_init_creds_keytab(
     if err:
         raise Krb5Error(context, err)
 
-    creds.needs_free = 1
+    creds.free_contents = 1
 
     return creds
 
@@ -399,6 +433,7 @@ def get_init_creds_password(
 ) -> Creds:
     creds = Creds(context)
     cdef krb5_error_code err = 0
+    cdef krb5_creds* raw_creds = creds.__c_value__()
 
     cdef const char *password_ptr = NULL
     if password is not None and len(password):
@@ -417,7 +452,7 @@ def get_init_creds_password(
     with nogil:
         err = krb5_get_init_creds_password(
             context.raw,
-            &creds.raw,
+            raw_creds,
             client.raw,
             password_ptr,
             callback,
@@ -430,7 +465,7 @@ def get_init_creds_password(
     if err:
         raise Krb5Error(context, err)
 
-    creds.needs_free = 1
+    creds.free_contents = 1
 
     return creds
 
@@ -455,11 +490,11 @@ def init_creds_get_creds(
     creds = Creds(context)
     cdef krb5_error_code err = 0
 
-    err = krb5_init_creds_get_creds(context.raw, ctx.raw, &creds.raw)
+    err = krb5_init_creds_get_creds(context.raw, ctx.raw, creds.__c_value__())
     if err:
         raise Krb5Error(context, err)
 
-    creds.needs_free = 1
+    creds.free_contents = 1
     return creds
 
 
@@ -542,11 +577,17 @@ def get_renewed_creds(
     if in_tkt_service is not None and len(in_tkt_service):
         in_tkt_service_ptr = <const char*>&in_tkt_service[0]
 
-    err = krb5_get_renewed_creds(context.raw, &creds.raw, client.raw, ccache.raw, in_tkt_service_ptr)
+    err = krb5_get_renewed_creds(
+        context.raw,
+        creds.__c_value__(),
+        client.raw,
+        ccache.raw,
+        in_tkt_service_ptr,
+    )
     if err:
         raise Krb5Error(context, err)
 
-    creds.needs_free = 1
+    creds.free_contents = 1
 
     return creds
 

@@ -196,11 +196,16 @@ cdef class CCache:
         try:
             while True:
                 creds = Creds(self.ctx)
-                err = krb5_cc_next_cred(self.ctx.raw, self.raw, &cursor, &creds.raw)
+                err = krb5_cc_next_cred(
+                    self.ctx.raw,
+                    self.raw,
+                    &cursor,
+                    creds.__c_value__(),
+                )
                 if err:
                     break
 
-                creds.needs_free = 1
+                creds.free_contents = 1
                 yield creds
 
         finally:
@@ -350,7 +355,12 @@ def cc_remove_cred(
 ) -> None:
     cdef krb5_error_code err = 0
 
-    err = krb5_cc_remove_cred(context.raw, cache.raw, flags, &creds.raw)
+    err = krb5_cc_remove_cred(
+        context.raw,
+        cache.raw,
+        flags,
+        creds.__c_value__(),
+    )
     if err:
         raise Krb5Error(context, err)
 
@@ -384,9 +394,16 @@ def cc_retrieve_cred(
     creds = Creds(context)
     cdef krb5_error_code err = 0
 
-    err = krb5_cc_retrieve_cred(context.raw, cache.raw, flags, &mcreds.raw, &creds.raw)
+    err = krb5_cc_retrieve_cred(
+        context.raw,
+        cache.raw,
+        flags,
+        mcreds.__c_value__(),
+        creds.__c_value__())
     if err:
         raise Krb5Error(context, err)
+
+    creds.free_contents = 1
 
     return creds
 
@@ -413,7 +430,7 @@ def cc_store_cred(
 ) -> None:
     cdef krb5_error_code err = 0
 
-    err = krb5_cc_store_cred(context.raw, cache.raw, &creds.raw)
+    err = krb5_cc_store_cred(context.raw, cache.raw, creds.__c_value__())
     if err:
         raise Krb5Error(context, err)
 
