@@ -53,7 +53,7 @@ def get_validated_creds(
 
     err = krb5_get_validated_creds(
         context.raw,
-        creds.__c_value__(),
+        creds.get_pointer(),
         client.raw,
         ccache.raw,
         in_tkt_service_ptr)

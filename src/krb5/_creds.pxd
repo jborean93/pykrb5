@@ -12,7 +12,7 @@ cdef class Creds:
     cdef int _free_raw
 
     cdef void* set_raw_from_lib(Creds self, krb5_creds* raw)
-    cdef krb5_creds *__c_value__(Creds self)
+    cdef krb5_creds *get_pointer(Creds self)
 
 
 cdef class InitCredsContext:

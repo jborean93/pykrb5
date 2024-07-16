@@ -200,7 +200,7 @@ cdef class CCache:
                     self.ctx.raw,
                     self.raw,
                     &cursor,
-                    creds.__c_value__(),
+                    creds.get_pointer(),
                 )
                 if err:
                     break
@@ -359,7 +359,7 @@ def cc_remove_cred(
         context.raw,
         cache.raw,
         flags,
-        creds.__c_value__(),
+        creds.get_pointer(),
     )
     if err:
         raise Krb5Error(context, err)
@@ -398,8 +398,8 @@ def cc_retrieve_cred(
         context.raw,
         cache.raw,
         flags,
-        mcreds.__c_value__(),
-        creds.__c_value__())
+        mcreds.get_pointer(),
+        creds.get_pointer())
     if err:
         raise Krb5Error(context, err)
 
@@ -430,7 +430,7 @@ def cc_store_cred(
 ) -> None:
     cdef krb5_error_code err = 0
 
-    err = krb5_cc_store_cred(context.raw, cache.raw, creds.__c_value__())
+    err = krb5_cc_store_cred(context.raw, cache.raw, creds.get_pointer())
     if err:
         raise Krb5Error(context, err)
 

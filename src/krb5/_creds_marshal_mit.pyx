@@ -45,7 +45,7 @@ def marshal_credentials(
     cdef char *value
 
     try:
-        err = krb5_marshal_credentials(context.raw, creds.__c_value__(), &data)
+        err = krb5_marshal_credentials(context.raw, creds.get_pointer(), &data)
 
         if err:
             raise Krb5Error(context, err)
