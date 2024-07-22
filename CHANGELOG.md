@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.0 - TBD
+## 0.6.0 - 2024-07-22
 
 * Fix up wheel package build to not include uneeded `python_krb5.h` file in the final `site-packages` install dir
 * Added CCache APIs:
