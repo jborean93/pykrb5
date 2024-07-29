@@ -13,7 +13,7 @@ import krb5
 # This could be extensive to do per function so just do it once and share that
 @pytest.fixture(scope="session")
 def realm() -> typing.Iterator[k5test.K5Realm]:
-    test_realm = k5test.K5Realm()
+    test_realm = k5test.K5Realm(start_kadmind=True)
     try:
         original_env: typing.Dict[str, typing.Optional[str]] = {}
         for k in test_realm.env.keys():

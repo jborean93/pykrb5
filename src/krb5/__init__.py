@@ -189,6 +189,15 @@ else:
 
 
 try:
+    from krb5._change_password import set_password, set_password_using_ccache
+except ImportError:
+    pass
+else:
+    __all__.append("set_password")
+    __all__.append("set_password_using_ccache")
+
+
+try:
     from krb5._ccache_match import cc_cache_match
 except ImportError:
     pass
