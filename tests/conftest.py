@@ -14,6 +14,9 @@ import krb5
 @pytest.fixture(scope="session")
 def realm() -> typing.Iterator[k5test.K5Realm]:
     test_realm = k5test.K5Realm(start_kadmind=True)
+
+    test_realm.run_kadminl(["addprinc", "-pw", test_realm.password("user"), "+needchange", "userexp"])
+
     try:
         original_env: typing.Dict[str, typing.Optional[str]] = {}
         for k in test_realm.env.keys():
