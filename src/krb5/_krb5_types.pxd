@@ -3,6 +3,7 @@
 
 from libc.stdint cimport int32_t, uint8_t, uint32_t
 
+
 cdef extern from "python_krb5.h":
     """
     // The Heimdal and MIT krb5 libraries have different implementations of the krb5_data struct.
