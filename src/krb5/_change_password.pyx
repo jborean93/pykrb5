@@ -38,15 +38,20 @@ def set_password(
     Creds creds not None,
     const unsigned char[:] newpw not None,
     change_password_for: typing.Optional[Principal] = None,
-) -> bytes:
+) -> typing.Tuple[int, bytes, bytes]:
     cdef krb5_error_code err = 0
     cdef int result_code
     cdef krb5_data result_code_string
     cdef krb5_data result_string
-    cdef char *newpw_ptr = <char *>&newpw[0]
+    cdef char *newpw_ptr
     cdef krb5_principal change_password_for_ptr = NULL
     cdef size_t length
     cdef char *value
+
+    if len(newpw) > 0:
+        newpw_ptr = <char *>&newpw[0]
+    else:
+        newpw_ptr = <char *>b""
 
     pykrb5_init_krb5_data(&result_code_string)
     pykrb5_init_krb5_data(&result_string)
@@ -71,11 +76,19 @@ def set_password(
         pykrb5_get_krb5_data(&result_code_string, &length, &value)
 
         if length == 0:
-            data_bytes = b""
+            result_code_bytes = b""
         else:
-            data_bytes = value[:length]
+            result_code_bytes = value[:length]
 
-        return data_bytes
+        pykrb5_get_krb5_data(&result_string, &length, &value)
+
+        if length == 0:
+            result_string_bytes = b""
+        else:
+            result_string_bytes = value[:length]
+
+
+        return (result_code, result_code_bytes, result_string_bytes)
 
     finally:
         pykrb5_free_data_contents(context.raw, &result_code_string)
@@ -86,15 +99,20 @@ def set_password_using_ccache(
     CCache ccache not None,
     const unsigned char[:] newpw not None,
     change_password_for: typing.Optional[Principal] = None,
-) -> bytes:
+) -> typing.Tuple[int, bytes, bytes]:
     cdef krb5_error_code err = 0
     cdef int result_code
     cdef krb5_data result_code_string
     cdef krb5_data result_string
-    cdef char *newpw_ptr = <char *>&newpw[0]
+    cdef char *newpw_ptr
     cdef krb5_principal change_password_for_ptr = NULL
     cdef size_t length
     cdef char *value
+
+    if len(newpw) > 0:
+        newpw_ptr = <char *>&newpw[0]
+    else:
+        newpw_ptr = <char *>b""
 
     pykrb5_init_krb5_data(&result_code_string)
     pykrb5_init_krb5_data(&result_string)
@@ -116,14 +134,22 @@ def set_password_using_ccache(
         if err:
             raise Krb5Error(context, err)
 
+        pykrb5_get_krb5_data(&result_code_string, &length, &value)
+
+        if length == 0:
+            result_code_bytes = b""
+        else:
+            result_code_bytes = value[:length]
+
         pykrb5_get_krb5_data(&result_string, &length, &value)
 
         if length == 0:
-            data_bytes = b""
+            result_string_bytes = b""
         else:
-            data_bytes = value[:length]
+            result_string_bytes = value[:length]
 
-        return data_bytes
+
+        return (result_code, result_code_bytes, result_string_bytes)
 
     finally:
         pykrb5_free_data_contents(context.raw, &result_code_string)

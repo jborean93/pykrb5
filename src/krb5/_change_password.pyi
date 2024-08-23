@@ -10,7 +10,7 @@ def set_password(
     creds: Creds,
     newpw: bytes,
     change_password_for: typing.Optional[Principal],
-) -> bytes:
+) -> typing.Tuple[int, bytes, bytes]:
     """Set a password for a principal using specified credentials.
 
 
@@ -22,6 +22,10 @@ def set_password(
     owning creds. If change_password_for is not `None`, the change is
     performed on the specified principal.
 
+    Note: to change the expired password for owner, obtain the owner creds using
+    get_init_creds_password() with in_tkt_service set to "kadmin/changepw" and
+    then use those creds to set the new password.
+
     This is only present when compiled against MIT 1.7 or newer.
 
     Args:
@@ -31,14 +35,18 @@ def set_password(
         change_password_for: `None` or the principal to set the password for.
 
     Returns:
-        bytes: Data returned from the remote system."""
+        Tuple (result code, result code string, server response):
+        The non-zero result code means error.
+        The server response may contain additional information about
+        password policy violations or other errors.
+    """
 
 def set_password_using_ccache(
     context: Context,
     ccache: CCache,
     newpw: bytes,
     change_password_for: typing.Optional[Principal],
-) -> bytes:
+) -> typing.Tuple[int, bytes, bytes]:
     """Set a password for a principal using cached credentials.
 
 
@@ -54,9 +62,13 @@ def set_password_using_ccache(
 
     Args:
         context: Krb5 context.
-        creds: Credentials to serialize.
+        ccache: Credential cache.
         newpw: The new password.
         change_password_for: `None` or the principal to set the password for.
 
     Returns:
-        bytes: Data returned from the remote system."""
+        Tuple (result code, result code string, server response):
+        The non-zero result code means error.
+        The server response may contain additional information about
+        password policy violations or other errors.
+    """
