@@ -35,8 +35,7 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     creds = krb5.get_init_creds_password(ctx, princ, opt, old_password.encode(), in_tkt_service=b"kadmin/changepw")
     assert isinstance(creds, krb5.Creds)
 
-    (result_code, result_code_string, result_string) = krb5.change_password(ctx, creds, new_password.encode())
-    assert result_code == 0
+    (result_code, result_code_string, result_string) = krb5.change_password(ctx, creds, empty_password.encode())
 
     assert result_code != 0
     assert result_code_string.find(b"rejected") > 0
@@ -54,7 +53,8 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     creds = krb5.get_init_creds_password(ctx, princ, opt, new_password.encode())
     assert isinstance(creds, krb5.Creds)
 
-    realm.run_kadminl(["modprinc", "-pw", old_password, "-policy", "pwpol", "+needchange", princ_name])
+    realm.run_kadminl(["cpw", "-pw", old_password, princ_name])
+    realm.run_kadminl(["modprinc", "+needchange", princ_name])
 
     with pytest.raises(krb5.Krb5Error) as exc:
         krb5.get_init_creds_password(ctx, princ, opt, password=old_password.encode())
