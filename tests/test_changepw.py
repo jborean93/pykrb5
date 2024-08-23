@@ -1,4 +1,4 @@
-import typing
+import os
 
 import k5test
 import pytest
@@ -8,6 +8,8 @@ import krb5
 
 @pytest.mark.requires_api("set_password")
 def test_set_password(realm: k5test.K5Realm) -> None:
+    if realm.provider == "heimdal" and os.path.isfile("/etc/redhat-release"):
+        realm.kadmind = "/usr/libexec/heimdal-kadmind"
     realm.start_kadmind()
 
     princ_name = "exp@" + realm.realm
@@ -16,8 +18,12 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     empty_password = ""
     new_password = realm.password("user")
 
-    realm.run_kadminl(["addpol", "-minlength", "6", "-minclasses", "2", "pwpol"])
-    realm.run_kadminl(["addprinc", "-pw", old_password, "-policy", "pwpol", "+needchange", princ_name])
+    if realm.provider == "mit":
+        realm.run_kadminl(["addpol", "-minlength", "6", "-minclasses", "2", "pwpol"])
+        realm.run_kadminl(["addprinc", "-pw", old_password, "-policy", "pwpol", "+needchange", princ_name])
+    else:
+        realm.run_kadmin(["-l", "add", "-p", old_password, princ_name])
+        realm.run_kadmin(["-l", "modify", "-a", "requires-pw-change", princ_name])
 
     ctx = krb5.init_context()
     princ = krb5.parse_name_flags(ctx, princ_name.encode())
@@ -46,28 +52,7 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     creds = krb5.get_init_creds_password(ctx, princ, opt, new_password.encode())
     assert isinstance(creds, krb5.Creds)
 
-    realm.run_kadminl(["delprinc", "-force", princ_name])
-    realm.run_kadminl(["delpol", "-force", "pwpol"])
-
-    realm.stop_kadmind()
-
-
-@pytest.mark.requires_api("set_password_using_ccache")
-def test_set_password_using_ccache(realm: k5test.K5Realm) -> None:
-    realm.start_kadmind()
-
-    princ_name = "exp@" + realm.realm
-    old_password = realm.password("userexp")
-    weak_password = "sh0rt"
-    empty_password = ""
-    new_password = realm.password("user")
-
-    realm.run_kadminl(["addpol", "-minlength", "6", "-minclasses", "2", "pwpol"])
-    realm.run_kadminl(["addprinc", "-pw", old_password, "-policy", "pwpol", "+needchange", princ_name])
-
-    ctx = krb5.init_context()
-    princ = krb5.parse_name_flags(ctx, princ_name.encode())
-    opt = krb5.get_init_creds_opt_alloc(ctx)
+    realm.run_kadminl(["modprinc", "-pw", old_password, "-policy", "pwpol", "+needchange", princ_name])
 
     with pytest.raises(krb5.Krb5Error) as exc:
         krb5.get_init_creds_password(ctx, princ, opt, password=old_password.encode())
