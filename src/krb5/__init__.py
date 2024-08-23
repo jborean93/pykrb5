@@ -189,12 +189,17 @@ else:
 
 
 try:
-    from krb5._change_password import set_password, set_password_using_ccache
+    from krb5._change_password import (
+        change_password,
+        set_password,
+        set_password_using_ccache,
+    )
 except ImportError:
     pass
 else:
     __all__.append("set_password")
     __all__.append("set_password_using_ccache")
+    __all__.append("change_password")
 
 
 try:
