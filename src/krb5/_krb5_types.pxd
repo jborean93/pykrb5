@@ -29,6 +29,9 @@ cdef extern from "python_krb5.h":
         char *value
     )
     {
+#if !defined(HEIMDAL_XFREE)
+        data->magic = KV5M_DATA;
+#endif
         data->length = length;
         data->data = value;
     }
