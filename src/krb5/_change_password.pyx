@@ -33,6 +33,15 @@ cdef extern from "python_krb5.h":
         krb5_data *result_string
     ) nogil
 
+    krb5_error_code krb5_change_password(
+        krb5_context context,
+        krb5_creds *creds,
+        const char *newpw,
+        int *result_code,
+        krb5_data *result_code_string,
+        krb5_data *result_string
+    ) nogil
+
 def set_password(
     Context context not None,
     Creds creds not None,
@@ -154,3 +163,12 @@ def set_password_using_ccache(
     finally:
         pykrb5_free_data_contents(context.raw, &result_code_string)
         pykrb5_free_data_contents(context.raw, &result_string)
+
+def change_password(
+    Context context not None,
+    Creds creds not None,
+    const unsigned char[:] newpw not None,
+) -> typing.Tuple[int, bytes, bytes]:
+
+    return set_password(context, creds, newpw, None)
+
