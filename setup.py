@@ -220,7 +220,6 @@ if not SKIP_EXTENSIONS:
         "context",
         ("context_mit", "krb5_init_secure_context"),
         "creds",
-        ("change_password", "krb5_set_password"),
         ("creds_marshal_mit", "krb5_marshal_credentials"),
         ("creds_mit", "krb5_get_etype_info"),
         "creds_opt",
@@ -237,6 +236,7 @@ if not SKIP_EXTENSIONS:
         ("kt_have_content", "krb5_kt_have_content"),
         "principal",
         ("principal_heimdal", "krb5_principal_get_realm"),
+        "set_password",
         "string",
         ("string_mit", "krb5_enctype_to_name"),
     ]:
