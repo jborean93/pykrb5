@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0 - TBD
+
+* Added password management APIs
+  * [krb5_set_password](https://web.mit.edu/kerberos/krb5-latest/doc/appdev/refs/api/krb5_set_password.html)
+  * [krb5_set_password_using_ccache](https://web.mit.edu/kerberos/krb5-latest/doc/appdev/refs/api/krb5_set_password_using_ccache.html)
+
 ## 0.6.0 - 2024-07-22
 
 * Fix up wheel package build to not include uneeded `python_krb5.h` file in the final `site-packages` install dir
