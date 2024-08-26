@@ -83,6 +83,11 @@ from krb5._principal import (
     parse_name_flags,
     unparse_name_flags,
 )
+from krb5._set_password import (
+    SetPasswordResult,
+    set_password,
+    set_password_using_ccache,
+)
 from krb5._string import enctype_to_string, string_to_enctype
 
 __all__ = [
@@ -101,6 +106,7 @@ __all__ = [
     "Principal",
     "PrincipalParseFlags",
     "PrincipalUnparseFlags",
+    "SetPasswordResult",
     "TicketFlags",
     "TicketTimes",
     "build_principal",
@@ -155,6 +161,8 @@ __all__ = [
     "kt_resolve",
     "parse_name_flags",
     "set_default_realm",
+    "set_password",
+    "set_password_using_ccache",
     "set_real_time",
     "string_to_enctype",
     "timeofday",

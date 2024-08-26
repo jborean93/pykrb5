@@ -236,6 +236,7 @@ if not SKIP_EXTENSIONS:
         ("kt_have_content", "krb5_kt_have_content"),
         "principal",
         ("principal_heimdal", "krb5_principal_get_realm"),
+        "set_password",
         "string",
         ("string_mit", "krb5_enctype_to_name"),
     ]:

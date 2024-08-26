@@ -6,6 +6,22 @@ from libc.stdint cimport int32_t, uint8_t, uint32_t
 
 cdef extern from "python_krb5.h":
     """
+    // The Heimdal and MIT krb5 libraries have different implementations of the krb5_data struct.
+    // MIT uses a struct with a member magic of -1760647422L
+    // Heimdal uses a struct without a magic
+    void pykrb5_init_krb5_data(
+        krb5_data *data
+    )
+    {
+#if defined(HEIMDAL_XFREE)
+        krb5_data_zero(data);
+#else
+        data->magic = KV5M_DATA;
+        data->length = 0;
+        data->data = NULL;
+#endif
+    }
+
     // The structures are different so cannot be explicitly defined in Cython. Use inline C to set the structs elements
     // by name.
     void pykrb5_set_krb5_data(
@@ -14,6 +30,9 @@ cdef extern from "python_krb5.h":
         char *value
     )
     {
+#if !defined(HEIMDAL_XFREE)
+        data->magic = KV5M_DATA;
+#endif
         data->length = length;
         data->data = value;
     }
@@ -120,6 +139,10 @@ cdef extern from "python_krb5.h":
         int num_prompts,
         krb5_prompt prompts[],
     )
+
+    void pykrb5_init_krb5_data(
+        krb5_data *data,
+    ) nogil
 
     void pykrb5_set_krb5_data(
         krb5_data *data,
