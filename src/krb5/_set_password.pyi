@@ -14,7 +14,7 @@ def set_password(
     context: Context,
     creds: Creds,
     newpw: bytes,
-    change_password_for: typing.Optional[Principal],
+    change_password_for: typing.Optional[Principal] = None,
 ) -> SetPasswordResult:
     """Set a password for a principal using specified credentials.
 
@@ -58,7 +58,7 @@ def set_password_using_ccache(
     context: Context,
     ccache: CCache,
     newpw: bytes,
-    change_password_for: typing.Optional[Principal],
+    change_password_for: typing.Optional[Principal] = None,
 ) -> SetPasswordResult:
     """Set a password for a principal using cached credentials.
 
