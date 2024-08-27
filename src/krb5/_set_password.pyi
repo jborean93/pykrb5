@@ -15,18 +15,16 @@ class SetPasswordResult(typing.NamedTuple):
     KRB5_KPASSWD_HARDERROR (2) - Server error\n
     KRB5_KPASSWD_AUTHERROR (3) - Authentication error\n
     KRB5_KPASSWD_SOFTERROR (4) - Password change rejected\n
-    Note the `result_code_string` is a byte string.
 
     The `result_string` is a server protocol response that may contain useful
     information about password policy violations or other errors.
-    It is decoded as a `string` according to ``RFC 3244``
     """
 
     result_code: int
     """The library result code of the password change operation."""
     result_code_string: bytes
     """The byte string representation of the result code."""
-    result_string: str
+    result_string: bytes
     """Server response string"""
 
 def set_password(
