@@ -87,16 +87,16 @@ def set_password(
         if length == 0:
             result_code_bytes = b""
         else:
-            result_code_bytes = value[:length]
+            result_code_bytes = <bytes>value[:length]
 
         pykrb5_get_krb5_data(&result_string, &length, &value)
 
         if length == 0:
             result_string_bytes = b""
         else:
-            result_string_bytes = value[:length]
+            result_string_bytes = <bytes>value[:length]
 
-        return SetPasswordResult(result_code, result_code_bytes, result_string_bytes.decode("utf-8"))
+        return SetPasswordResult(result_code, result_code_bytes, result_string_bytes)
 
     finally:
         pykrb5_free_data_contents(context.raw, &result_code_string)
@@ -147,16 +147,16 @@ def set_password_using_ccache(
         if length == 0:
             result_code_bytes = b""
         else:
-            result_code_bytes = value[:length]
+            result_code_bytes = <bytes>value[:length]
 
         pykrb5_get_krb5_data(&result_string, &length, &value)
 
         if length == 0:
             result_string_bytes = b""
         else:
-            result_string_bytes = value[:length]
+            result_string_bytes = <bytes>value[:length]
 
-        return SetPasswordResult(result_code, result_code_bytes, result_string_bytes.decode("utf-8"))
+        return SetPasswordResult(result_code, result_code_bytes, result_string_bytes)
 
     finally:
         pykrb5_free_data_contents(context.raw, &result_code_string)

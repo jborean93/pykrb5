@@ -45,12 +45,12 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     (result_code, result_code_string, result_string) = krb5.set_password(ctx, creds, empty_password.encode())
     assert result_code != 0
     assert result_code_string.find(b"rejected") > 0
-    assert result_string.find("too short") > 0
+    assert result_string.find(b"too short") > 0
 
     (result_code, result_code_string, result_string) = krb5.set_password(ctx, creds, weak_password.encode())
     assert result_code != 0
     assert result_code_string.find(b"rejected") > 0
-    assert result_string.find("too short") > 0
+    assert result_string.find(b"too short") > 0
 
     (result_code, result_code_string, result_string) = krb5.set_password(ctx, creds, new_password.encode())
     assert result_code == 0
@@ -91,14 +91,14 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     )
     assert result_code != 0
     assert result_code_string.find(b"rejected") > 0
-    assert result_string.find("too short") > 0
+    assert result_string.find(b"too short") > 0
 
     (result_code, result_code_string, result_string) = krb5.set_password_using_ccache(
         ctx, cc, weak_password.encode(), princ
     )
     assert result_code != 0
     assert result_code_string.find(b"rejected") > 0
-    assert result_string.find("too short") > 0
+    assert result_string.find(b"too short") > 0
 
     (result_code, result_code_string, result_string) = krb5.set_password_using_ccache(
         ctx, cc, new_password.encode(), princ
