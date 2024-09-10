@@ -1,9 +1,12 @@
 import typing
+
 from krb5._exceptions import Krb5Error
+
+from libc.string cimport strlen
 
 from krb5._context cimport Context
 from krb5._krb5_types cimport *
-from libc.string cimport strlen
+
 
 cdef extern from "python_krb5.h":
     krb5_error_code krb5_chpw_message(

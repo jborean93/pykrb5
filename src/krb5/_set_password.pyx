@@ -4,6 +4,7 @@ import collections
 import enum
 import struct
 import typing
+
 from krb5._exceptions import Krb5Error
 
 from krb5._ccache cimport CCache
