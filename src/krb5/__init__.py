@@ -84,6 +84,7 @@ from krb5._principal import (
     unparse_name_flags,
 )
 from krb5._set_password import (
+    ADPolicyInfo,
     SetPasswordResult,
     set_password,
     set_password_using_ccache,
@@ -91,6 +92,7 @@ from krb5._set_password import (
 from krb5._string import enctype_to_string, string_to_enctype
 
 __all__ = [
+    "ADPolicyInfo",
     "CCache",
     "Context",
     "CredentialsRetrieveFlags",
@@ -194,6 +196,13 @@ except ImportError:
 else:
     __all__.append("marshal_credentials")
     __all__.append("unmarshal_credentials")
+
+try:
+    from krb5._chpw_message_mit import chpw_message
+except ImportError:
+    pass
+else:
+    __all__.append("chpw_message")
 
 
 try:

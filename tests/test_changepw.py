@@ -1,7 +1,113 @@
+import locale
+
 import k5test
 import pytest
 
 import krb5
+
+
+@pytest.mark.requires_api("chpw_message")
+def test_chpw_message() -> None:
+
+    # MIT Kerberos test samples, https://github.com/krb5/krb5, human readable
+    adpi_tests = {
+        "complex": [
+            (
+                b"\0\0",
+                b"\0\0\0\0",
+                b"\0\0\0\0",
+                b"\0\0\0\1",
+                b"\0\0\0\0\0\0\0\0",
+                b"\0\0\0\0\0\0\0\0",
+            ),
+            (
+                "The password must include numbers or symbols.",
+                "Don't include any part of your name in the password.",
+            ),
+        ],
+        "length": [
+            (
+                b"\0\0",
+                b"\0\0\0\x0d",
+                b"\0\0\0\0",
+                b"\0\0\0\0",
+                b"\0\0\0\0\0\0\0\0",
+                b"\0\0\0\0\0\0\0\0",
+            ),
+            ("The password must contain at least 13 characters.",),
+        ],
+        "history": [
+            (
+                b"\0\0",
+                b"\0\0\0\0",
+                b"\0\0\0\x09",
+                b"\0\0\0\0",
+                b"\0\0\0\0\0\0\0\0",
+                b"\0\0\0\0\0\0\0\0",
+            ),
+            ("The password must be different from the previous 9 passwords."),
+        ],
+        "age": [
+            (
+                b"\0\0",
+                b"\0\0\0\0",
+                b"\0\0\0\0",
+                b"\0\0\0\0",
+                b"\0\0\0\0\0\0\0\0",
+                b"\0\0\x01\x92\x54\xd3\x80\0",
+            ),
+            ("The password can only be changed every 2 days."),
+        ],
+        "combined": [
+            (
+                b"\0\0",
+                b"\0\0\0\x05",
+                b"\0\0\0\x0d",
+                b"\0\0\0\x01",
+                b"\0\0\0\0\0\0\0\0",
+                b"\0\0\0\xc9\x2a\x69\xc0\0",
+            ),
+            (
+                "The password can only be changed once a day.",
+                "The password must be different from the previous 13 passwords.",
+                "The password must contain at least 5 characters.",
+                "The password must include numbers or symbols.",
+                "Don't include any part of your name in the password.",
+            ),
+        ],
+        "unknown": [
+            (
+                b"\0\0",
+                b"\0\0\0\0",
+                b"\0\0\0\0",
+                b"\x80\0\0\1",
+                b"\0\0\0\0\0\0\0\0",
+                b"\0\0\0\0\0\0\0\0",
+            )
+        ],
+    }
+
+    locale.setlocale(locale.LC_ALL, "C")
+
+    ctx = krb5.init_context()
+
+    samples = {k: b"".join(v[0]) for k, v in adpi_tests.items()}
+
+    for k, test in adpi_tests.items():
+        if len(test) > 1:
+            phrases = test[1]
+            for phrase in phrases:
+                assert krb5.chpw_message(ctx, samples[k]).find(phrase) >= 0
+
+    assert krb5.ADPolicyInfo.Prop.COMPLEX in krb5.ADPolicyInfo.from_bytes(samples["complex"]).properties
+    assert krb5.ADPolicyInfo.from_bytes(samples["length"]).min_length == 13
+    assert krb5.ADPolicyInfo.from_bytes(samples["history"]).history == 9
+    assert krb5.ADPolicyInfo.from_bytes(samples["age"]).min_age == 2 * 86400 * krb5.ADPolicyInfo.SECONDS
+    assert krb5.ADPolicyInfo.from_bytes(samples["combined"]).min_length == 5
+    assert krb5.ADPolicyInfo.from_bytes(samples["combined"]).history == 13
+    assert krb5.ADPolicyInfo.from_bytes(samples["combined"]).min_age == 1 * 86400 * krb5.ADPolicyInfo.SECONDS
+    assert krb5.ADPolicyInfo.Prop.COMPLEX in krb5.ADPolicyInfo.from_bytes(samples["combined"]).properties
+    assert 0x80000000 & krb5.ADPolicyInfo.from_bytes(samples["unknown"]).properties != 0
 
 
 def test_set_password(realm: k5test.K5Realm) -> None:
@@ -45,12 +151,14 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     (result_code, result_code_string, result_string) = krb5.set_password(ctx, creds, empty_password.encode())
     assert result_code != 0
     assert result_code_string.find(b"rejected") > 0
-    assert result_string.find(b"too short") > 0
+    assert isinstance(result_string, str)
+    assert result_string.find("too short") > 0
 
     (result_code, result_code_string, result_string) = krb5.set_password(ctx, creds, weak_password.encode())
     assert result_code != 0
     assert result_code_string.find(b"rejected") > 0
-    assert result_string.find(b"too short") > 0
+    assert isinstance(result_string, str)
+    assert result_string.find("too short") > 0
 
     (result_code, result_code_string, result_string) = krb5.set_password(ctx, creds, new_password.encode())
     assert result_code == 0
@@ -91,14 +199,16 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     )
     assert result_code != 0
     assert result_code_string.find(b"rejected") > 0
-    assert result_string.find(b"too short") > 0
+    assert isinstance(result_string, str)
+    assert result_string.find("too short") > 0
 
     (result_code, result_code_string, result_string) = krb5.set_password_using_ccache(
         ctx, cc, weak_password.encode(), princ
     )
     assert result_code != 0
     assert result_code_string.find(b"rejected") > 0
-    assert result_string.find(b"too short") > 0
+    assert isinstance(result_string, str)
+    assert result_string.find("too short") > 0
 
     (result_code, result_code_string, result_string) = krb5.set_password_using_ccache(
         ctx, cc, new_password.encode(), princ

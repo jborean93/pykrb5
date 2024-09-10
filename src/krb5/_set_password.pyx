@@ -1,8 +1,9 @@
 # Support for Microsoft set/change password was added in MIT 1.7
 
 import collections
+import enum
+import struct
 import typing
-
 from krb5._exceptions import Krb5Error
 
 from krb5._ccache cimport CCache
@@ -32,6 +33,51 @@ cdef extern from "python_krb5.h":
         krb5_data *result_code_string,
         krb5_data *result_string
     ) nogil
+
+class ADPolicyInfo(typing.NamedTuple):
+    class Prop(enum.IntFlag):
+        COMPLEX = 0x00000001
+        NO_ANON_CHANGEv = 0x00000002
+        NO_CLEAR_CHANGE = 0x00000004
+        LOCKOUT_ADMINS = 0x00000008
+        STORE_CLEARTEXT = 0x00000010
+        REFUSE_CHANGE = 0x00000020
+
+    FORMAT = "!HIIIQQ"
+    SECONDS = 10000000
+    properties: "ADPolicyInfo.Prop"
+    min_length: int
+    history: int
+    max_age: int
+    min_age: int
+
+    @classmethod
+    def from_bytes(cls, data: bytes) -> "ADPolicyInfo":
+        if len(data) != struct.calcsize(cls.FORMAT):
+            raise ValueError("Invalid data length")
+        signature, min_length, history, flags, max_age, min_age = struct.unpack(cls.FORMAT, data)
+        if signature != 0x0000:
+            raise ValueError("Invalid signature")
+        return cls(
+            min_length=min_length,
+            history=history,
+            max_age=max_age,
+            min_age=min_age,
+            properties=ADPolicyInfo.Prop(flags),
+        )
+
+    @classmethod
+    def to_bytes(cls, policy: "ADPolicyInfo") -> bytes:
+        return struct.pack(
+            cls.FORMAT,
+            0x0000,
+            policy.min_length,
+            policy.history,
+            int(policy.properties),
+            policy.max_age,
+            policy.min_age,
+        )
+
 
 SetPasswordResult = collections.namedtuple(
     'SetPasswordResult',
@@ -92,11 +138,18 @@ def set_password(
         pykrb5_get_krb5_data(&result_string, &length, &value)
 
         if length == 0:
-            result_string_bytes = b""
+            decoded_data = b""
         else:
-            result_string_bytes = <bytes>value[:length]
+            byte_string = <bytes>value[:length]
+            try:
+                decoded_data = byte_string.decode("utf-8")
+            except UnicodeDecodeError:
+                try:
+                    decoded_data = ADPolicyInfo.from_bytes(byte_string)
+                except (ValueError, struct.error):
+                    decoded_data = byte_string
 
-        return SetPasswordResult(result_code, result_code_bytes, result_string_bytes)
+        return SetPasswordResult(result_code, result_code_bytes, decoded_data)
 
     finally:
         pykrb5_free_data_contents(context.raw, &result_code_string)
@@ -152,11 +205,18 @@ def set_password_using_ccache(
         pykrb5_get_krb5_data(&result_string, &length, &value)
 
         if length == 0:
-            result_string_bytes = b""
+            decoded_data = b""
         else:
-            result_string_bytes = <bytes>value[:length]
+            byte_string = <bytes>value[:length]
+            try:
+                decoded_data = byte_string.decode("utf-8")
+            except UnicodeDecodeError:
+                try:
+                    decoded_data = ADPolicyInfo.from_bytes(byte_string)
+                except (ValueError, struct.error):
+                    decoded_data = byte_string
 
-        return SetPasswordResult(result_code, result_code_bytes, result_string_bytes)
+        return SetPasswordResult(result_code, result_code_bytes, decoded_data)
 
     finally:
         pykrb5_free_data_contents(context.raw, &result_code_string)
