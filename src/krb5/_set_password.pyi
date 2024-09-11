@@ -37,7 +37,6 @@ class ADPolicyInfo(typing.NamedTuple):
         LOCKOUT_ADMINS = 0x00000008
         STORE_CLEARTEXT = 0x00000010
         REFUSE_CHANGE = 0x00000020
-
     SECONDS = 10000000
     properties: "ADPolicyInfo.Prop"
     min_length: int
@@ -58,7 +57,6 @@ class ADPolicyInfo(typing.NamedTuple):
         Raises:
             ValueError: Invalid data length or signature not 0x0000
         """
-
     @classmethod
     def to_bytes(cls, policy: "ADPolicyInfo") -> bytes:
         """Reverses the `from_bytes` operation
@@ -102,7 +100,6 @@ class SetPasswordResult(typing.NamedTuple):
         HARDERROR = 2
         AUTHERROR = 3
         SOFTERROR = 4
-
     result_code: SetPasswordResult.Code
     """The library result code of the password change operation."""
     result_code_string: str | bytes
