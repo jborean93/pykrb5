@@ -148,30 +148,32 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     creds = krb5.get_init_creds_password(ctx, princ, opt, old_password.encode(), in_tkt_service=b"kadmin/changepw")
     assert isinstance(creds, krb5.Creds)
 
-    (result_code, result_code_string, result_string) = krb5.set_password(ctx, creds, empty_password.encode())
-    assert result_code != 0
-    assert result_code_string.find(b"rejected") > 0
-    assert isinstance(result_string, str)
-    assert result_string.find("too short") > 0
+    (result_code, result_code_string, server_response) = krb5.set_password(ctx, creds, empty_password.encode())
+    assert result_code == krb5.SetPasswordResult.Code.SOFTERROR
+    assert isinstance(result_code_string, str)
+    assert result_code_string.find("rejected") > 0
+    assert isinstance(server_response, str)
+    assert server_response.find("too short") > 0
 
-    (result_code, result_code_string, result_string) = krb5.set_password(ctx, creds, weak_password.encode())
-    assert result_code != 0
-    assert result_code_string.find(b"rejected") > 0
-    assert isinstance(result_string, str)
-    assert result_string.find("too short") > 0
+    (result_code, result_code_string, server_response) = krb5.set_password(ctx, creds, weak_password.encode())
+    assert result_code == krb5.SetPasswordResult.Code.SOFTERROR
+    assert isinstance(result_code_string, str)
+    assert result_code_string.find("rejected") > 0
+    assert isinstance(server_response, str)
+    assert server_response.find("too short") > 0
 
-    (result_code, result_code_string, result_string) = krb5.set_password(ctx, creds, new_password.encode())
-    assert result_code == 0
+    (result_code, result_code_string, server_response) = krb5.set_password(ctx, creds, new_password.encode())
+    assert result_code == krb5.SetPasswordResult.Code.SUCCESS
 
     creds = krb5.get_init_creds_password(ctx, princ, opt, new_password.encode())
     assert isinstance(creds, krb5.Creds)
     assert creds.client.name == princ.name
 
     # set_password for other principal using admin creds
-    (result_code, result_code_string, result_string) = krb5.set_password(
+    (result_code, result_code_string, server_response) = krb5.set_password(
         ctx, admin_creds, new_password2.encode(), change_password_for=princ
     )
-    assert result_code == 0
+    assert result_code == krb5.SetPasswordResult.Code.SUCCESS
 
     creds = krb5.get_init_creds_password(ctx, princ, opt, new_password2.encode())
     assert isinstance(creds, krb5.Creds)
@@ -194,26 +196,28 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     krb5.cc_initialize(ctx, cc, princ)
     krb5.cc_store_cred(ctx, cc, creds)
 
-    (result_code, result_code_string, result_string) = krb5.set_password_using_ccache(
+    (result_code, result_code_string, server_response) = krb5.set_password_using_ccache(
         ctx, cc, empty_password.encode(), princ
     )
-    assert result_code != 0
-    assert result_code_string.find(b"rejected") > 0
-    assert isinstance(result_string, str)
-    assert result_string.find("too short") > 0
+    assert result_code == krb5.SetPasswordResult.Code.SOFTERROR
+    assert isinstance(result_code_string, str)
+    assert result_code_string.find("rejected") > 0
+    assert isinstance(server_response, str)
+    assert server_response.find("too short") > 0
 
-    (result_code, result_code_string, result_string) = krb5.set_password_using_ccache(
+    (result_code, result_code_string, server_response) = krb5.set_password_using_ccache(
         ctx, cc, weak_password.encode(), princ
     )
-    assert result_code != 0
-    assert result_code_string.find(b"rejected") > 0
-    assert isinstance(result_string, str)
-    assert result_string.find("too short") > 0
+    assert result_code == krb5.SetPasswordResult.Code.SOFTERROR
+    assert isinstance(result_code_string, str)
+    assert result_code_string.find("rejected") > 0
+    assert isinstance(server_response, str)
+    assert server_response.find("too short") > 0
 
-    (result_code, result_code_string, result_string) = krb5.set_password_using_ccache(
+    (result_code, result_code_string, server_response) = krb5.set_password_using_ccache(
         ctx, cc, new_password.encode(), princ
     )
-    assert result_code == 0
+    assert result_code == krb5.SetPasswordResult.Code.SUCCESS
 
     creds = krb5.get_init_creds_password(ctx, princ, opt, new_password.encode())
     assert isinstance(creds, krb5.Creds)
@@ -226,10 +230,10 @@ def test_set_password(realm: k5test.K5Realm) -> None:
     krb5.cc_store_cred(ctx, admin_cc, admin_creds)
 
     # set_password for other principal using admin ccache
-    (result_code, result_code_string, result_string) = krb5.set_password_using_ccache(
+    (result_code, result_code_string, server_response) = krb5.set_password_using_ccache(
         ctx, admin_cc, new_password2.encode(), change_password_for=princ
     )
-    assert result_code == 0
+    assert result_code == krb5.SetPasswordResult.Code.SUCCESS
 
     creds = krb5.get_init_creds_password(ctx, princ, opt, new_password2.encode())
     assert isinstance(creds, krb5.Creds)

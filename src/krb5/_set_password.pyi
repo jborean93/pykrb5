@@ -9,21 +9,25 @@ from krb5._principal import Principal
 class ADPolicyInfo(typing.NamedTuple):
     """The structure containing the reasons for failed password change attempt.
     Should be used to inform the end user how to meet the policy requirements.
-    This is specific to Active Directory and is returned as the `result_string`
-    by :meth:`set_password()` and :meth:`set_password_using_ccache()`. If the
-    `result_string` is exactly 30 bytes long starting with `0x0000`, it is very
-    likely to be an `ADPolicyInfo`.
+    This is specific to Active Directory and is returned as the
+    `server_response` by :meth:`set_password()` and
+    :meth:`set_password_using_ccache()`.
+
+    When using MIT library, this structure may be encoded back to bytes and
+    passed to :meth:`chpw_message()` to obtain a human readable response.
+    With Heimdal, it is required to provide a custom implementation based
+    on the known fields below.
 
     The structure contains the following fields:\n
-    `properties` - Password policy flags (only `COMPLEX` has known meaning)\n
-    `min_length` - Minimal password length\n
-    `history`    - Number of passwords that this system remembers\n
-    `max_age`    - Maximum password age in 100 nanosecond units\n
-    `min_age`    - Minimum password age in 100 nanosecond units\n
+    - `properties` - Password policy bit flags (see below)
+    - `min_length` - Minimal password length
+    - `history`    - Number of passwords that this system remembers
+    - `max_age`    - Maximum password age in 100 nanosecond units
+    - `min_age`    - Minimum password age in 100 nanosecond units
 
-    The only known property is `COMPLEX` which means that the password must meet
-    certain character variety and not contain the user's name.
-    To convert `max_age` and `min_age` to seconds, divide them by 10_000_000.
+    The only known property flag is `COMPLEX` which means that the password must
+    meet certain character variety and not contain the user's name.
+    To convert `max_age` and `min_age` to seconds, divide them by 10,000,000.
     """
 
     class Prop(enum.IntFlag):
@@ -46,7 +50,7 @@ class ADPolicyInfo(typing.NamedTuple):
         """Decode AD policy result from byte string
 
         Args:
-            data: Serialized AD policy `result_string`
+            data: Serialized AD policy `server_response`
 
         Returns:
             ADPolicyInfo: Decoded AD policy result strcture
@@ -70,32 +74,41 @@ class SetPasswordResult(typing.NamedTuple):
     """The result returned by :meth:`set_password()` and
     :meth:`set_password_using_ccache()`.
 
-    The `result_code` and `result_code_string` is the library response:
-    - KRB5_KPASSWD_SUCCESS   (0) - Success
-    - KRB5_KPASSWD_MALFORMED (1) - Malformed request error
-    - KRB5_KPASSWD_HARDERROR (2) - Server error
-    - KRB5_KPASSWD_AUTHERROR (3) - Authentication error
-    - KRB5_KPASSWD_SOFTERROR (4) - Password change rejected
+    The `result_code` and `result_code_string` are the pure library responses:
+    - SUCCESS   (0) - Success
+    - MALFORMED (1) - Malformed request error
+    - HARDERROR (2) - Server error
+    - AUTHERROR (3) - Authentication error
+    - SOFTERROR (4) - Password change rejected
 
-    The `result_string` is a server protocol response that may contain useful
+    The `server_response` is a server protocol message that may contain useful
     information about password policy violations or other errors.
     Depending on `kpasswd` implementation, it may be returned as:\n
     - decoded UTF-8 string (MIT KDC)
-    - decoded binary structure represented by `ADPolicyInfo` (Active Directory)
-    - binary string (other implementations)
+    - decoded `ADPolicyInfo` (Active Directory Policy Information)
+    - raw bytes (if unable to decode)
 
-    The `ADPolicyInfo` may be used directly. On MIT libraty, it may be also
-    converted back to bytes with :meth:`to_bytes()` and passed to
-    :meth:`chpw_message()` to obtain a library decoded human readable response.
+    When (and only when) the server response is exactly 30 bytes long starting
+    with `0x0000`, it is assumed to be `ADPolicyInfo`.
+    All other cases are first decoded as UTF-8 string and even if this fails,
+    the raw bytes are returned as `server_response`.
 
+    See `ADPolicyInfo` for more information.
     """
 
-    result_code: int
+    class Code(enum.IntEnum):
+        SUCCESS = 0
+        MALFORMED = 1
+        HARDERROR = 2
+        AUTHERROR = 3
+        SOFTERROR = 4
+
+    result_code: SetPasswordResult.Code
     """The library result code of the password change operation."""
-    result_code_string: bytes
-    """The byte string representation of the result code."""
-    result_string: str | ADPolicyInfo | bytes
-    """Server response."""
+    result_code_string: str | bytes
+    """The decoded or byte string representation of the result code."""
+    server_response: str | ADPolicyInfo | bytes
+    """Implementation-specific server response."""
 
 def set_password(
     context: Context,

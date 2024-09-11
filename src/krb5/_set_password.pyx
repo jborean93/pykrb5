@@ -1,6 +1,5 @@
 # Support for Microsoft set/change password was added in MIT 1.7
 
-import collections
 import enum
 import struct
 import typing
@@ -79,15 +78,16 @@ class ADPolicyInfo(typing.NamedTuple):
             policy.min_age,
         )
 
-
-SetPasswordResult = collections.namedtuple(
-    'SetPasswordResult',
-    [
-        'result_code',
-        'result_code_string',
-        'result_string',
-    ],
-)
+class SetPasswordResult(typing.NamedTuple):
+    class Code(enum.IntEnum):
+        SUCCESS = 0
+        MALFORMED = 1
+        HARDERROR = 2
+        AUTHERROR = 3
+        SOFTERROR = 4
+    result_code: SetPasswordResult.Code
+    result_code_string: str | bytes
+    server_response: str | ADPolicyInfo | bytes
 
 def set_password(
     Context context not None,
@@ -97,8 +97,8 @@ def set_password(
 ) -> SetPasswordResult:
     cdef krb5_error_code err = 0
     cdef int result_code
-    cdef krb5_data result_code_string
-    cdef krb5_data result_string
+    cdef krb5_data krb5_result_code_string
+    cdef krb5_data krb5_server_response
     cdef char *newpw_ptr
     cdef krb5_principal change_password_for_ptr = NULL
     cdef size_t length
@@ -109,8 +109,8 @@ def set_password(
     else:
         newpw_ptr = <char *>b""
 
-    pykrb5_init_krb5_data(&result_code_string)
-    pykrb5_init_krb5_data(&result_string)
+    pykrb5_init_krb5_data(&krb5_result_code_string)
+    pykrb5_init_krb5_data(&krb5_server_response)
 
     if change_password_for is not None:
         change_password_for_ptr = change_password_for.raw
@@ -122,39 +122,43 @@ def set_password(
             newpw_ptr,
             change_password_for_ptr,
             &result_code,
-            &result_code_string,
-            &result_string
+            &krb5_result_code_string,
+            &krb5_server_response
         )
 
         if err:
             raise Krb5Error(context, err)
 
-        pykrb5_get_krb5_data(&result_code_string, &length, &value)
+        pykrb5_get_krb5_data(&krb5_result_code_string, &length, &value)
 
         if length == 0:
-            result_code_bytes = b""
+            result_code_string = ""
         else:
             result_code_bytes = <bytes>value[:length]
+            try:
+                result_code_string = result_code_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                result_code_string = result_code_bytes
 
-        pykrb5_get_krb5_data(&result_string, &length, &value)
+        pykrb5_get_krb5_data(&krb5_server_response, &length, &value)
 
         if length == 0:
-            decoded_data = b""
+            server_response = ""
         else:
-            byte_string = <bytes>value[:length]
+            server_response_bytes = <bytes>value[:length]
             try:
-                decoded_data = byte_string.decode("utf-8")
+                server_response = server_response_bytes.decode("utf-8")
             except UnicodeDecodeError:
                 try:
-                    decoded_data = ADPolicyInfo.from_bytes(byte_string)
+                    server_response = ADPolicyInfo.from_bytes(server_response_bytes)
                 except (ValueError, struct.error):
-                    decoded_data = byte_string
+                    server_response = server_response_bytes
 
-        return SetPasswordResult(result_code, result_code_bytes, decoded_data)
+        return SetPasswordResult(result_code, result_code_string, server_response)
 
     finally:
-        pykrb5_free_data_contents(context.raw, &result_code_string)
-        pykrb5_free_data_contents(context.raw, &result_string)
+        pykrb5_free_data_contents(context.raw, &krb5_result_code_string)
+        pykrb5_free_data_contents(context.raw, &krb5_server_response)
 
 def set_password_using_ccache(
     Context context not None,
@@ -164,8 +168,8 @@ def set_password_using_ccache(
 ) -> SetPasswordResult:
     cdef krb5_error_code err = 0
     cdef int result_code
-    cdef krb5_data result_code_string
-    cdef krb5_data result_string
+    cdef krb5_data krb5_result_code_string
+    cdef krb5_data krb5_server_response
     cdef char *newpw_ptr
     cdef krb5_principal change_password_for_ptr = NULL
     cdef size_t length
@@ -176,8 +180,8 @@ def set_password_using_ccache(
     else:
         newpw_ptr = <char *>b""
 
-    pykrb5_init_krb5_data(&result_code_string)
-    pykrb5_init_krb5_data(&result_string)
+    pykrb5_init_krb5_data(&krb5_result_code_string)
+    pykrb5_init_krb5_data(&krb5_server_response)
 
     if change_password_for is not None:
         change_password_for_ptr = change_password_for.raw
@@ -189,37 +193,41 @@ def set_password_using_ccache(
             newpw_ptr,
             change_password_for_ptr,
             &result_code,
-            &result_code_string,
-            &result_string
+            &krb5_result_code_string,
+            &krb5_server_response
         )
 
         if err:
             raise Krb5Error(context, err)
 
-        pykrb5_get_krb5_data(&result_code_string, &length, &value)
+        pykrb5_get_krb5_data(&krb5_result_code_string, &length, &value)
 
         if length == 0:
-            result_code_bytes = b""
+            result_code_string = ""
         else:
             result_code_bytes = <bytes>value[:length]
+            try:
+                result_code_string = result_code_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                result_code_string = result_code_bytes
 
-        pykrb5_get_krb5_data(&result_string, &length, &value)
+        pykrb5_get_krb5_data(&krb5_server_response, &length, &value)
 
         if length == 0:
-            decoded_data = b""
+            server_response = ""
         else:
-            byte_string = <bytes>value[:length]
+            server_response_bytes = <bytes>value[:length]
             try:
-                decoded_data = byte_string.decode("utf-8")
+                server_response = server_response_bytes.decode("utf-8")
             except UnicodeDecodeError:
                 try:
-                    decoded_data = ADPolicyInfo.from_bytes(byte_string)
+                    server_response = ADPolicyInfo.from_bytes(server_response_bytes)
                 except (ValueError, struct.error):
-                    decoded_data = byte_string
+                    server_response = server_response_bytes
 
-        return SetPasswordResult(result_code, result_code_bytes, decoded_data)
+        return SetPasswordResult(result_code, result_code_string, server_response)
 
     finally:
-        pykrb5_free_data_contents(context.raw, &result_code_string)
-        pykrb5_free_data_contents(context.raw, &result_string)
+        pykrb5_free_data_contents(context.raw, &krb5_result_code_string)
+        pykrb5_free_data_contents(context.raw, &krb5_server_response)
 
