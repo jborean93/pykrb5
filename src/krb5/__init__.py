@@ -85,7 +85,9 @@ from krb5._principal import (
 )
 from krb5._set_password import (
     ADPolicyInfo,
+    ADPolicyInfoProp,
     SetPasswordResult,
+    SetPasswordResultCode,
     set_password,
     set_password_using_ccache,
 )
@@ -93,6 +95,7 @@ from krb5._string import enctype_to_string, string_to_enctype
 
 __all__ = [
     "ADPolicyInfo",
+    "ADPolicyInfoProp",
     "CCache",
     "Context",
     "CredentialsRetrieveFlags",
@@ -109,6 +112,7 @@ __all__ = [
     "PrincipalParseFlags",
     "PrincipalUnparseFlags",
     "SetPasswordResult",
+    "SetPasswordResultCode",
     "TicketFlags",
     "TicketTimes",
     "build_principal",

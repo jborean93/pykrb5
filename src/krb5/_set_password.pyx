@@ -34,18 +34,16 @@ cdef extern from "python_krb5.h":
         krb5_data *result_string
     ) nogil
 
-class ADPolicyInfo(typing.NamedTuple):
-    class Prop(enum.IntFlag):
-        COMPLEX = 0x00000001
-        NO_ANON_CHANGEv = 0x00000002
-        NO_CLEAR_CHANGE = 0x00000004
-        LOCKOUT_ADMINS = 0x00000008
-        STORE_CLEARTEXT = 0x00000010
-        REFUSE_CHANGE = 0x00000020
+class ADPolicyInfoProp(enum.IntFlag):
+    COMPLEX = 0x00000001
+    NO_ANON_CHANGEv = 0x00000002
+    NO_CLEAR_CHANGE = 0x00000004
+    LOCKOUT_ADMINS = 0x00000008
+    STORE_CLEARTEXT = 0x00000010
+    REFUSE_CHANGE = 0x00000020
 
-    FORMAT = "!HIIIQQ"
-    SECONDS = 10000000
-    properties: "ADPolicyInfo.Prop"
+class ADPolicyInfo(typing.NamedTuple):
+    properties: ADPolicyInfoProp
     min_length: int
     history: int
     max_age: int
@@ -53,9 +51,9 @@ class ADPolicyInfo(typing.NamedTuple):
 
     @classmethod
     def from_bytes(cls, data: bytes) -> "ADPolicyInfo":
-        if len(data) != struct.calcsize(cls.FORMAT):
+        if len(data) != struct.calcsize("!HIIIQQ"):
             raise ValueError("Invalid data length")
-        signature, min_length, history, flags, max_age, min_age = struct.unpack(cls.FORMAT, data)
+        signature, min_length, history, flags, max_age, min_age = struct.unpack("!HIIIQQ", data)
         if signature != 0x0000:
             raise ValueError("Invalid signature")
         return cls(
@@ -63,13 +61,13 @@ class ADPolicyInfo(typing.NamedTuple):
             history=history,
             max_age=max_age,
             min_age=min_age,
-            properties=ADPolicyInfo.Prop(flags),
+            properties=ADPolicyInfoProp(flags),
         )
 
     @classmethod
     def to_bytes(cls, policy: "ADPolicyInfo") -> bytes:
         return struct.pack(
-            cls.FORMAT,
+            "!HIIIQQ",
             0x0000,
             policy.min_length,
             policy.history,
@@ -78,14 +76,15 @@ class ADPolicyInfo(typing.NamedTuple):
             policy.min_age,
         )
 
+class SetPasswordResultCode(enum.IntEnum):
+    SUCCESS = 0
+    MALFORMED = 1
+    HARDERROR = 2
+    AUTHERROR = 3
+    SOFTERROR = 4
+
 class SetPasswordResult(typing.NamedTuple):
-    class Code(enum.IntEnum):
-        SUCCESS = 0
-        MALFORMED = 1
-        HARDERROR = 2
-        AUTHERROR = 3
-        SOFTERROR = 4
-    result_code: SetPasswordResult.Code
+    result_code: SetPasswordResultCode
     result_code_string: str | bytes
     server_response: str | ADPolicyInfo | bytes
 

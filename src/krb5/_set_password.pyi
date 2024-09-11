@@ -6,6 +6,14 @@ from krb5._context import Context
 from krb5._creds import Creds
 from krb5._principal import Principal
 
+class ADPolicyInfoProp(enum.IntFlag):
+    COMPLEX = 0x00000001
+    NO_ANON_CHANGEv = 0x00000002
+    NO_CLEAR_CHANGE = 0x00000004
+    LOCKOUT_ADMINS = 0x00000008
+    STORE_CLEARTEXT = 0x00000010
+    REFUSE_CHANGE = 0x00000020
+
 class ADPolicyInfo(typing.NamedTuple):
     """The structure containing the reasons for failed password change attempt.
     Should be used to inform the end user how to meet the policy requirements.
@@ -30,15 +38,7 @@ class ADPolicyInfo(typing.NamedTuple):
     To convert `max_age` and `min_age` to seconds, divide them by 10,000,000.
     """
 
-    class Prop(enum.IntFlag):
-        COMPLEX = 0x00000001
-        NO_ANON_CHANGEv = 0x00000002
-        NO_CLEAR_CHANGE = 0x00000004
-        LOCKOUT_ADMINS = 0x00000008
-        STORE_CLEARTEXT = 0x00000010
-        REFUSE_CHANGE = 0x00000020
-    SECONDS = 10000000
-    properties: "ADPolicyInfo.Prop"
+    properties: ADPolicyInfoProp
     min_length: int
     history: int
     max_age: int
@@ -68,6 +68,13 @@ class ADPolicyInfo(typing.NamedTuple):
             bytes: Serialized AD policy result byte string
         """
 
+class SetPasswordResultCode(enum.IntEnum):
+    SUCCESS = 0
+    MALFORMED = 1
+    HARDERROR = 2
+    AUTHERROR = 3
+    SOFTERROR = 4
+
 class SetPasswordResult(typing.NamedTuple):
     """The result returned by :meth:`set_password()` and
     :meth:`set_password_using_ccache()`.
@@ -94,13 +101,7 @@ class SetPasswordResult(typing.NamedTuple):
     See `ADPolicyInfo` for more information.
     """
 
-    class Code(enum.IntEnum):
-        SUCCESS = 0
-        MALFORMED = 1
-        HARDERROR = 2
-        AUTHERROR = 3
-        SOFTERROR = 4
-    result_code: SetPasswordResult.Code
+    result_code: SetPasswordResultCode
     """The library result code of the password change operation."""
     result_code_string: str | bytes
     """The decoded or byte string representation of the result code."""
