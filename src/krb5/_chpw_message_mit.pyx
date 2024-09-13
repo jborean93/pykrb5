@@ -1,4 +1,3 @@
-import locale
 import typing
 
 from krb5._exceptions import Krb5Error
@@ -25,7 +24,7 @@ cdef extern from "python_krb5.h":
 def chpw_message(
     Context context not None,
     const unsigned char[:] server_string not None,
-) -> str:
+) -> bytes:
     cdef krb5_error_code err = 0
     cdef krb5_data server_string_raw
     cdef char *message_out = NULL
@@ -42,11 +41,10 @@ def chpw_message(
             raise Krb5Error(context, err)
 
         if message_out is NULL:
-            return ""
+            return b""
         else:
             message_len = strlen(message_out)
-            message_bytes = <bytes>message_out[:message_len]
-            return  message_bytes.decode(locale.getencoding())
+            return <bytes>message_out[:message_len]
 
     finally:
         krb5_free_string(context.raw, message_out)

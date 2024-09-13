@@ -97,7 +97,8 @@ def test_chpw_message() -> None:
         if isinstance(test, list) and len(test) > 1:
             phrases = test[1]
             for phrase in phrases:
-                assert krb5.chpw_message(ctx, samples[k]).find(phrase) >= 0
+                message = krb5.chpw_message(ctx, samples[k])
+                assert message.decode().find(phrase) >= 0
 
     assert krb5.ADPolicyInfoProp.COMPLEX in krb5.ADPolicyInfo.from_bytes(samples["complex"]).properties
     assert krb5.ADPolicyInfo.from_bytes(samples["length"]).min_length == 13
@@ -150,17 +151,13 @@ def test_set_password(realm: k5test.K5Realm) -> None:
 
     (result_code, result_code_string, server_response) = krb5.set_password(ctx, creds, empty_password.encode())
     assert result_code == krb5.SetPasswordResultCode.SOFTERROR
-    assert isinstance(result_code_string, str)
-    assert result_code_string.find("rejected") > 0
-    assert isinstance(server_response, str)
-    assert server_response.find("too short") > 0
+    assert result_code_string.find(b"rejected") > 0
+    assert server_response.find(b"too short") > 0
 
     (result_code, result_code_string, server_response) = krb5.set_password(ctx, creds, weak_password.encode())
     assert result_code == krb5.SetPasswordResultCode.SOFTERROR
-    assert isinstance(result_code_string, str)
-    assert result_code_string.find("rejected") > 0
-    assert isinstance(server_response, str)
-    assert server_response.find("too short") > 0
+    assert result_code_string.find(b"rejected") > 0
+    assert server_response.find(b"too short") > 0
 
     (result_code, result_code_string, server_response) = krb5.set_password(ctx, creds, new_password.encode())
     assert result_code == krb5.SetPasswordResultCode.SUCCESS
@@ -200,19 +197,15 @@ def test_set_password(realm: k5test.K5Realm) -> None:
         ctx, cc, empty_password.encode(), princ
     )
     assert result_code == krb5.SetPasswordResultCode.SOFTERROR
-    assert isinstance(result_code_string, str)
-    assert result_code_string.find("rejected") > 0
-    assert isinstance(server_response, str)
-    assert server_response.find("too short") > 0
+    assert result_code_string.find(b"rejected") > 0
+    assert server_response.find(b"too short") > 0
 
     (result_code, result_code_string, server_response) = krb5.set_password_using_ccache(
         ctx, cc, weak_password.encode(), princ
     )
     assert result_code == krb5.SetPasswordResultCode.SOFTERROR
-    assert isinstance(result_code_string, str)
-    assert result_code_string.find("rejected") > 0
-    assert isinstance(server_response, str)
-    assert server_response.find("too short") > 0
+    assert result_code_string.find(b"rejected") > 0
+    assert server_response.find(b"too short") > 0
 
     (result_code, result_code_string, server_response) = krb5.set_password_using_ccache(
         ctx, cc, new_password.encode(), princ

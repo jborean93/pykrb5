@@ -1,6 +1,7 @@
 # Copyright: (c) 2021 Jordan Borean (@jborean93) <jborean93@gmail.com>
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
+from krb5._adpi import ADPolicyInfo, ADPolicyInfoProp
 from krb5._ccache import (
     CCache,
     CredentialsRetrieveFlags,
@@ -84,8 +85,6 @@ from krb5._principal import (
     unparse_name_flags,
 )
 from krb5._set_password import (
-    ADPolicyInfo,
-    ADPolicyInfoProp,
     SetPasswordResult,
     SetPasswordResultCode,
     set_password,
