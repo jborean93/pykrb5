@@ -1,3 +1,4 @@
+import locale
 import typing
 
 from krb5._exceptions import Krb5Error
@@ -45,7 +46,7 @@ def chpw_message(
         else:
             message_len = strlen(message_out)
             message_bytes = <bytes>message_out[:message_len]
-            return  message_bytes.decode("utf-8")
+            return  message_bytes.decode(locale.getencoding())
 
     finally:
         krb5_free_string(context.raw, message_out)

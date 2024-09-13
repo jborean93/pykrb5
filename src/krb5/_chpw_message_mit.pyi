@@ -10,7 +10,9 @@ def chpw_message(context: Context, server_response: bytes) -> str:
     :meth:`to_bytes()`.
 
     Note that `gettext` library is used to translate the strings according
-    to locale settings.
+    to locale settings. For the list of existing translations, pls. refer
+    to MIT krb5 source code. Not all translations may be available on your
+    system.
 
     Args:
         context: Krb5 context.
