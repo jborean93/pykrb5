@@ -15,7 +15,6 @@ cdef extern from "python_krb5.h":
         char **message_out
     ) nogil
 
-cdef extern from "python_krb5.h":
     void krb5_free_string(
         krb5_context context,
         char *string

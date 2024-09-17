@@ -61,7 +61,7 @@ class SetPasswordResultCode(enum.IntEnum):
         value = int(value)
 
         new_member = int.__new__(cls, value)
-        new_member._name_ = f"Unknown_NameType_{str(value).replace('-', 'm')}"
+        new_member._name_ = f"Unknown_SetPasswordResultCode_{str(value).replace('-', 'm')}"
         new_member._value_ = value
         return cls._value2member_map_.setdefault(value, new_member)
 

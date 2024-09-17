@@ -69,23 +69,3 @@ class ADPolicyInfo(typing.NamedTuple):
             min_age=min_age,
             properties=ADPolicyInfoProp(flags),
         )
-
-    @classmethod
-    def to_bytes(cls, policy: "ADPolicyInfo") -> bytes:
-        """Reverses the `from_bytes` operation
-
-        Args:
-            policy: AD policy result structure
-
-        Returns:
-            bytes: Serialized AD policy result byte string
-        """
-        return struct.pack(
-            FORMAT,
-            0x0000,
-            policy.min_length,
-            policy.history,
-            int(policy.properties),
-            policy.max_age,
-            policy.min_age,
-        )

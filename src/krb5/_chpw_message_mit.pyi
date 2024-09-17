@@ -12,9 +12,6 @@ def chpw_message(context: Context, server_response: bytes) -> bytes:
     system. Caller is responsible for decoding the string according to
     locale settings.
 
-    To pass the `ADPolicyInfo` structure to this function, encode it with
-    :meth:`to_bytes()`.
-
     Args:
         context: Krb5 context.
         server_response: The `server_response` bytes received from the KDC.
