@@ -55,7 +55,6 @@ jobs:
         os:
         - macOS-12
         version:
-        - cp37-macosx_x86_64
         - cp38-macosx_x86_64
         - cp38-macosx_arm64
         - cp39-macosx_x86_64
@@ -66,6 +65,8 @@ jobs:
         - cp311-macosx_arm64
         - cp312-macosx_x86_64
         - cp312-macosx_arm64
+        - cp313-macosx_x86_64
+        - cp313-macosx_arm64
 
     steps:
     - uses: actions/download-artifact@v4
@@ -81,7 +82,7 @@ jobs:
         rm krb5-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v2.16.5
+      uses: pypa/cibuildwheel@v2.21.0
       env:
         CIBW_ARCHS: all
         CIBW_TEST_SKIP: '*_arm64'
@@ -107,12 +108,12 @@ jobs:
         - ubuntu-latest
         - macOS-12
         python-version:
-        - 3.7
         - 3.8
         - 3.9
         - '3.10'
         - '3.11'
         - '3.12'
+        - '3.13.0-rc.2'
         provider:
         - mit
         - heimdal
