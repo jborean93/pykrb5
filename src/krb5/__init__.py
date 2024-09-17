@@ -1,6 +1,7 @@
 # Copyright: (c) 2021 Jordan Borean (@jborean93) <jborean93@gmail.com>
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
+from krb5._adpi import ADPolicyInfo, ADPolicyInfoProp
 from krb5._ccache import (
     CCache,
     CredentialsRetrieveFlags,
@@ -85,12 +86,15 @@ from krb5._principal import (
 )
 from krb5._set_password import (
     SetPasswordResult,
+    SetPasswordResultCode,
     set_password,
     set_password_using_ccache,
 )
 from krb5._string import enctype_to_string, string_to_enctype
 
 __all__ = [
+    "ADPolicyInfo",
+    "ADPolicyInfoProp",
     "CCache",
     "Context",
     "CredentialsRetrieveFlags",
@@ -107,6 +111,7 @@ __all__ = [
     "PrincipalParseFlags",
     "PrincipalUnparseFlags",
     "SetPasswordResult",
+    "SetPasswordResultCode",
     "TicketFlags",
     "TicketTimes",
     "build_principal",
@@ -194,6 +199,13 @@ except ImportError:
 else:
     __all__.append("marshal_credentials")
     __all__.append("unmarshal_credentials")
+
+try:
+    from krb5._chpw_message_mit import chpw_message
+except ImportError:
+    pass
+else:
+    __all__.append("chpw_message")
 
 
 try:

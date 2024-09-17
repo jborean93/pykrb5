@@ -1,3 +1,4 @@
+import enum
 import typing
 
 from krb5._ccache import CCache
@@ -5,27 +6,52 @@ from krb5._context import Context
 from krb5._creds import Creds
 from krb5._principal import Principal
 
+class SetPasswordResultCode(enum.IntEnum):
+    """Password change result constants returned by :meth:`set_password()`
+    Follow RFC 3244 with additional Microsoft extensions.
+    """
+
+    SUCCESS = ...  # Success
+    MALFORMED = ...  # Malformed request
+    HARDERROR = ...  # Server error
+    AUTHERROR = ...  # Authentication error
+    SOFTERROR = ...  # Password change rejected
+    ACCESSDENIED = ...  # Microsoft extension: Not authorized
+    BAD_VERSION = ...  # Microsoft extension: Unknown RPC version
+    INITIAL_FLAG_NEEDED = ...  # Microsoft extension:
+    # The presented credentials were not obtained using a password directly
+
 class SetPasswordResult(typing.NamedTuple):
     """The result returned by :meth:`set_password()` and
     :meth:`set_password_using_ccache()`.
 
-    The `result_code` and `result_code_string` is the library response:\n
-    KRB5_KPASSWD_SUCCESS   (0) - Success\n
-    KRB5_KPASSWD_MALFORMED (1) - Malformed request error\n
-    KRB5_KPASSWD_HARDERROR (2) - Server error\n
-    KRB5_KPASSWD_AUTHERROR (3) - Authentication error\n
-    KRB5_KPASSWD_SOFTERROR (4) - Password change rejected\n
+    The `result_code` and `result_code_string` are the pure library responses.
+    See `SetPasswordResultCode` for more information.
 
-    The `result_string` is a server protocol response that may contain useful
+    The `server_response` is a server protocol message that may contain useful
     information about password policy violations or other errors.
+    Despite RFC 3244, the server response is not standardized and may vary.
+    Depending on `kpasswd` implementation, it may be returned as:\n
+    - 30-byte binary Active Directory Policy Information
+    - UTF-8 byte string (MIT KDC, potentially Heimdal KDC)
+    - raw bytes (unknown or custom implementation)
+
+    The trick is that Active Directory Policy Information always starts with
+    `0x0000` signature to distinguish from UTF-8.
+    So the client may try decoding the server response with either
+    :meth:`ADPolicyInfo.from_bytes()` or :meth:`bytes.decode()`.
+    And if the decoding fails with corresponding `ValueError` or
+    `UnicodeDecodeError`, the raw bytes should be analyzed.
+
+    See `ADPolicyInfo` for more information.
     """
 
-    result_code: int
+    result_code: SetPasswordResultCode
     """The library result code of the password change operation."""
     result_code_string: bytes
     """The byte string representation of the result code."""
-    result_string: bytes
-    """Server response string"""
+    server_response: bytes
+    """Implementation-specific server response."""
 
 def set_password(
     context: Context,
@@ -54,8 +80,7 @@ def set_password(
         change_password_for: `None` or the principal to set the password for.
 
     Returns:
-        SetPasswordResult: See `SetPasswordResult` for more information about
-        the return result.
+        SetPasswordResult: See `SetPasswordResult` for more information.
     """
 
 def set_password_using_ccache(
@@ -85,6 +110,5 @@ def set_password_using_ccache(
         change_password_for: `None` or the principal to set the password for.
 
     Returns:
-        SetPasswordResult: See `SetPasswordResult` for more information about
-        the return result.
+        SetPasswordResult: See `SetPasswordResult` for more information.
     """

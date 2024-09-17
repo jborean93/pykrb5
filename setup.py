@@ -217,6 +217,7 @@ if not SKIP_EXTENSIONS:
         ("ccache_match", "krb5_cc_cache_match"),
         ("ccache_support_switch", "krb5_cc_support_switch"),
         "cccol",
+        ("chpw_message_mit", "krb5_chpw_message"),
         "context",
         ("context_mit", "krb5_init_secure_context"),
         "creds",
