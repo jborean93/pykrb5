@@ -1,3 +1,8 @@
+# Copyright: (c) 2024 Jordan Borean (@jborean93) <jborean93@gmail.com>
+# MIT License (see LICENSE or https://opensource.org/licenses/MIT)
+
+from __future__ import annotations
+
 import enum
 import struct
 import typing
@@ -45,7 +50,7 @@ class ADPolicyInfo(typing.NamedTuple):
     min_age: int
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> "ADPolicyInfo":
+    def from_bytes(cls, data: bytes) -> ADPolicyInfo:
         """Decode AD policy result from byte string
 
         Args:
