@@ -1,10 +1,11 @@
 # Changelog
 
-## 0.7.0 - TBD
+## 0.7.0 - 2024-10-03
 
 * Require Python 3.8 or newer (dropped 3.7)
 * Added Python 3.13 wheel for macOS
 * Added password management APIs
+  * [krb5_chpw_message](https://web.mit.edu/kerberos/krb5-latest/doc/appdev/refs/api/krb5_chpw_message.html)
   * [krb5_set_password](https://web.mit.edu/kerberos/krb5-latest/doc/appdev/refs/api/krb5_set_password.html)
   * [krb5_set_password_using_ccache](https://web.mit.edu/kerberos/krb5-latest/doc/appdev/refs/api/krb5_set_password_using_ccache.html)
 
