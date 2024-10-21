@@ -1,6 +1,6 @@
 black==22.10.0
 isort==5.10.1
-k5test>=0.10.0
+k5test>=0.10.4  # Needed for MITRealm.start_kadmind env default
 mypy==0.982
 pre-commit
 pytest
