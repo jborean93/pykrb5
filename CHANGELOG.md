@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1 - TBD
+
+* Fix up Cython 0.29.x support when building the library
+
 ## 0.7.0 - 2024-10-03
 
 * Require Python 3.8 or newer (dropped 3.7)
