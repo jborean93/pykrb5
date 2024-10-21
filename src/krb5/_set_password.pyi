@@ -1,3 +1,8 @@
+# Copyright: (c) 2024 Jordan Borean (@jborean93) <jborean93@gmail.com>
+# MIT License (see LICENSE or https://opensource.org/licenses/MIT)
+
+from __future__ import annotations
+
 import enum
 import typing
 
@@ -57,7 +62,7 @@ def set_password(
     context: Context,
     creds: Creds,
     newpw: bytes,
-    change_password_for: typing.Optional[Principal] = None,
+    change_password_for: Principal | None = None,
 ) -> SetPasswordResult:
     """Set a password for a principal using specified credentials.
 
@@ -87,7 +92,7 @@ def set_password_using_ccache(
     context: Context,
     ccache: CCache,
     newpw: bytes,
-    change_password_for: typing.Optional[Principal] = None,
+    change_password_for: Principal | None = None,
 ) -> SetPasswordResult:
     """Set a password for a principal using cached credentials.
 

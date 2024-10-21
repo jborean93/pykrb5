@@ -74,7 +74,7 @@ def set_password(
     Context context not None,
     Creds creds not None,
     const unsigned char[:] newpw not None,
-    change_password_for: typing.Optional[Principal] = None,
+    Principal change_password_for = None,
 ) -> SetPasswordResult:
     cdef krb5_error_code err = 0
     cdef int result_code
@@ -134,7 +134,7 @@ def set_password_using_ccache(
     Context context not None,
     CCache ccache not None,
     const unsigned char[:] newpw not None,
-    change_password_for: typing.Optional[Principal] = None,
+    Principal change_password_for = None,
 ) -> SetPasswordResult:
     cdef krb5_error_code err = 0
     cdef int result_code
