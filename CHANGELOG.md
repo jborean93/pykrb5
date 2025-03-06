@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.7.1 - TBD
+## 0.7.1 - 2025-03-06
 
 * Fix up Cython 0.29.x support when building the library
 
