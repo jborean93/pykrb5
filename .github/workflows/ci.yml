@@ -52,21 +52,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-        - macOS-latest
-        version:
-        - cp38-macosx_x86_64
-        - cp38-macosx_arm64
-        - cp39-macosx_x86_64
-        - cp39-macosx_arm64
-        - cp310-macosx_x86_64
-        - cp310-macosx_arm64
-        - cp311-macosx_x86_64
-        - cp311-macosx_arm64
-        - cp312-macosx_x86_64
-        - cp312-macosx_arm64
-        - cp313-macosx_x86_64
-        - cp313-macosx_arm64
+       include:
+       - os: macOS-13
+         version: cp313-macosx_x86_64
+       - os: macOS-15
+         version: cp313-macosx_arm64
+       - os: macOS-13
+         version: cp312-macosx_x86_64
+       - os: macOS-15
+         version: cp312-macosx_arm64
+       - os: macOS-13
+         version: cp311-macosx_x86_64
+       - os: macOS-15
+         version: cp311-macosx_arm64
+       - os: macOS-13
+         version: cp310-macosx_x86_64
+       - os: macOS-15
+         version: cp310-macosx_arm64
+       - os: macOS-13
+         version: cp39-macosx_x86_64
+       - os: macOS-15
+         version: cp39-macosx_arm64
+       - os: macOS-13
+         version: cp38-macosx_x86_64
+       - os: macOS-15
+         version: cp38-macosx_arm64
 
     steps:
     - uses: actions/download-artifact@v4
@@ -82,9 +92,8 @@ jobs:
         rm krb5-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v2.21.3
+      uses: pypa/cibuildwheel@v2.23.0
       env:
-        CIBW_ARCHS: all
         CIBW_BUILD: ${{ matrix.version }}
         CIBW_BUILD_VERBOSITY: 1
 
