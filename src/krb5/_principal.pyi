@@ -9,19 +9,19 @@ from krb5._context import Context
 class PrincipalParseFlags(enum.IntEnum):
     """Flags used to control :meth:`parse_name_flags`."""
 
-    none: PrincipalParseFlags = ...  #: No parse flags set
-    no_realm: PrincipalParseFlags = ...  #: Error if realm is present
-    require_realm: PrincipalParseFlags = ...  #: Error if realm is not present
-    enterprise: PrincipalParseFlags = ...  #: Create single-component enterprise principal
-    ignore_realm: PrincipalParseFlags = ...  #: Ignore realm if present
+    none = ...  #: No parse flags set
+    no_realm = ...  #: Error if realm is present
+    require_realm = ...  #: Error if realm is not present
+    enterprise = ...  #: Create single-component enterprise principal
+    ignore_realm = ...  #: Ignore realm if present
 
 class PrincipalUnparseFlags(enum.IntEnum):
     """Flags used to control :meth:`unparse_name_flags`."""
 
-    none: PrincipalUnparseFlags = ...  #: No unparse flags set
-    short: PrincipalUnparseFlags = ...  #: Omit realm if it is the local realm
-    no_realm: PrincipalUnparseFlags = ...  #: Omit realm always
-    display: PrincipalUnparseFlags = ...  #: Don't escape special characters
+    none = ...  #: No unparse flags set
+    short = ...  #: Omit realm if it is the local realm
+    no_realm = ...  #: Omit realm always
+    display = ...  #: Don't escape special characters
 
 class NameType(enum.IntEnum):
     """A kerberos principal name type"""
@@ -51,21 +51,27 @@ class Principal:
 
     def __copy__(self) -> "Principal":
         """Create a copy of the principal object."""
+
     @property
     def addr(self) -> typing.Optional[int]:
         """The raw krb5_principal pointer address of this credential cache."""
+
     @property
     def name(self) -> typing.Optional[bytes]:
         """The name of the principal."""
+
     @property
     def realm(self) -> bytes:
         """The realm of the principal."""
+
     @property
     def components(self) -> typing.List[bytes]:
         """The list of components of the principal."""
+
     @property
     def type(self) -> NameType:
         """The name type of the principal."""
+
     @type.setter
     def type(self, value: NameType) -> None:
         pass

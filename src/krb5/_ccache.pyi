@@ -11,17 +11,17 @@ from krb5._principal import Principal
 class CredentialsRetrieveFlags(enum.IntEnum):
     """Flags used to control :meth:`cc_retrieve_cred` and  :meth:`cc_remove_cred`."""
 
-    none: CredentialsRetrieveFlags = ...  #: No matching flags set
-    match_times: CredentialsRetrieveFlags = ...  #: The requested lifetime must be at least as great as specified
-    match_is_skey: CredentialsRetrieveFlags = ...  #: The is_skey field must match exactly
-    match_flags: CredentialsRetrieveFlags = ...  #: All the flags set in the match credentials must be set
-    match_times_exact: CredentialsRetrieveFlags = ...  #: All the time fields must match exactly
-    match_flags_exact: CredentialsRetrieveFlags = ...  #: All the flags must match exactly
-    match_authdata: CredentialsRetrieveFlags = ...  #: The authorization data must match
-    match_srv_nameonly: CredentialsRetrieveFlags = ...  #: Only the name portion of the principal name must match
-    match_2nd_tkt: CredentialsRetrieveFlags = ...  #: The second ticket must match
-    match_keytype: CredentialsRetrieveFlags = ...  #: The encryption key type must match
-    supported_ktypes: CredentialsRetrieveFlags = ...  #: The supported key types must match
+    none = ...  #: No matching flags set
+    match_times = ...  #: The requested lifetime must be at least as great as specified
+    match_is_skey = ...  #: The is_skey field must match exactly
+    match_flags = ...  #: All the flags set in the match credentials must be set
+    match_times_exact = ...  #: All the time fields must match exactly
+    match_flags_exact = ...  #: All the flags must match exactly
+    match_authdata = ...  #: The authorization data must match
+    match_srv_nameonly = ...  #: Only the name portion of the principal name must match
+    match_2nd_tkt = ...  #: The second ticket must match
+    match_keytype = ...  #: The encryption key type must match
+    supported_ktypes = ...  #: The supported key types must match
 
 class CCache:
     """Kerberos CCache
@@ -34,15 +34,19 @@ class CCache:
 
     def __iter__(self) -> typing.Iterator[Creds]:
         """Iterate credentials in a ccache."""
+
     @property
     def addr(self) -> typing.Optional[int]:
         """The raw krb5_ccache pointer address of this credential cache."""
+
     @property
     def name(self) -> typing.Optional[bytes]:
         """The name/residual of the credential cache."""
+
     @property
     def principal(self) -> typing.Optional[Principal]:
         """Default client principal of the credential cache."""
+
     @property
     def cache_type(self) -> typing.Optional[bytes]:
         """The type of the credential cache."""

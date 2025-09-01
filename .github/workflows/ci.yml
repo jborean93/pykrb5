@@ -25,11 +25,11 @@ jobs:
     name: build sdist
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.9
+        python-version: 3.12
 
     - name: build sdist
       run: |
@@ -54,6 +54,12 @@ jobs:
       matrix:
        include:
        - os: macOS-13
+         version: cp314-macosx_x86_64
+         prerelease: true
+       - os: macOS-15
+         version: cp314-macosx_arm64
+         prerelease: true
+       - os: macOS-13
          version: cp313-macosx_x86_64
        - os: macOS-15
          version: cp313-macosx_arm64
@@ -73,13 +79,9 @@ jobs:
          version: cp39-macosx_x86_64
        - os: macOS-15
          version: cp39-macosx_arm64
-       - os: macOS-13
-         version: cp38-macosx_x86_64
-       - os: macOS-15
-         version: cp38-macosx_arm64
 
     steps:
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v5
       with:
         name: artifact-sdist
         path: ./
@@ -92,43 +94,21 @@ jobs:
         rm krb5-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v2.23.0
+      uses: pypa/cibuildwheel@v3.1.4
       env:
         CIBW_BUILD: ${{ matrix.version }}
         CIBW_BUILD_VERBOSITY: 1
+        CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease || 'false' }}
 
     - uses: actions/upload-artifact@v4
       with:
         path: ./wheelhouse/*.whl
         name: artifact-wheel-${{ matrix.version }}
 
-  build_cython_0_29:
-    name: build cython 0.29.x
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - uses: actions/setup-python@v5
-      with:
-        python-version: 3.9
-
-    - name: build cython 0.29
-      run: |
-        sudo /bin/bash -c 'source ./build_helpers/lib.sh; lib::setup::system_requirements'
-
-        python -m pip install build
-        echo 'Cython<3.0.0' > constraints.txt
-        PIP_CONSTRAINT=constraints.txt python -m build \
-            --sdist \
-            --wheel \
-            --installer pip \
-            --verbose
-
   test:
     name: test
     needs:
     - build_sdist
-    - build_cython_0_29
     - build_wheels
 
     runs-on: ${{ matrix.os }}
@@ -139,12 +119,12 @@ jobs:
         - ubuntu-latest
         - macOS-latest
         python-version:
-        - 3.8
         - 3.9
         - '3.10'
         - '3.11'
         - '3.12'
         - '3.13'
+        - '3.14-dev'
         provider:
         - mit
         - heimdal
@@ -154,13 +134,13 @@ jobs:
           provider: mit
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v5
       with:
         pattern: artifact-*
         merge-multiple: true
@@ -189,7 +169,7 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v5
       with:
         pattern: artifact-*
         merge-multiple: true

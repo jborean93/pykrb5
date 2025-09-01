@@ -59,18 +59,23 @@ class Creds:
     @property
     def client(self) -> Principal:
         """Client's principal identifier."""
+
     @property
     def server(self) -> Principal:
         """Server's principal identifier."""
+
     @property
     def keyblock(self) -> KeyBlock:
         """Session encryption key info."""
+
     @property
     def times(self) -> TicketTimes:
         """Lifetime info."""
+
     @property
     def ticket_flags_raw(self) -> int:
         """Flags in ticket, as returned by libkrb5."""
+
     @property
     def ticket_flags(self) -> TicketFlags:
         """Flags in ticket, converted to a representation where the first flag is in the lowermost bit."""
@@ -80,6 +85,7 @@ class Creds:
     @property
     def ticket(self) -> bytes:
         """Ticket string itself."""
+
     @property
     def second_ticket(self) -> bytes:
         """second ticket, if related to ticket (via DUPLICATE-SKEY or ENC-TKT-IN-SKEY)"""
@@ -127,6 +133,7 @@ class Krb5Prompt:
             num_prompts: Number of times :meth:`prompt` is to be called for
                 this prompt session.
         """
+
     def prompt(
         self,
         msg: bytes,

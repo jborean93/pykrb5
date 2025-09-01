@@ -13,7 +13,7 @@ Due to the complex nature of this API it is highly recommended to use something 
   * [MIT Kebreros](https://web.mit.edu/kerberos/) - Minimum 1.17
   * [Heimdal](https://github.com/heimdal/heimdal)
 * A C compiler, such as GCC
-* Python 3.6+
+* Python 3.9+
 
 _Note: macOS includes their own implementation of Heimdal and a compiler isn't needed on that platform if installing from the wheel._
 

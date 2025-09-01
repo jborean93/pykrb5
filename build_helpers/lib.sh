@@ -54,7 +54,7 @@ lib::setup::python_requirements() {
     KRB5_VERSION="$( python -c "import build.util; print(build.util.project_wheel_metadata('.').get('Version'))" )"
 
     python -m pip install krb5=="${KRB5_VERSION}" \
-        --find-links "file://${PWD}/dist" \
+        --find-links dist \
         --verbose
 
     echo "Installing dev dependencies"

@@ -23,12 +23,15 @@ class KeyTab:
         being iterated does not exist. It may not be possible to add/remove
         entries on a keytab while it is being enumerated.
         """
+
     @property
     def addr(self) -> typing.Optional[int]:
         """The raw krb5_keytab pointer address of this credential cache."""
+
     @property
     def name(self) -> typing.Optional[bytes]:
         """The name/residual of the keytab."""
+
     @property
     def kt_type(self) -> typing.Optional[bytes]:
         """The type of the keytab."""
@@ -49,12 +52,15 @@ class KeyTabEntry:
     @property
     def key(self) -> KeyBlock:
         """The keytab key data block."""
+
     @property
     def kvno(self) -> int:
         """The key version number associated with the keytab entry."""
+
     @property
     def principal(self) -> Principal:
         """The principal associated with the keytab entry."""
+
     @property
     def timestamp(self) -> int:
         """The time creation entry of the keytab entry."""
