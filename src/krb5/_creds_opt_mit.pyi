@@ -11,8 +11,8 @@ from krb5._creds_opt import GetInitCredsOpt
 class FastFlags(enum.IntEnum):
     """Flags used to control :meth:`get_init_creds_opt_set_fast_flags`."""
 
-    none: FastFlags = ...  #: No flags set.
-    required: FastFlags = ...  #: Require KDC to support FAST.
+    none = ...  #: No flags set.
+    required = ...  #: Require KDC to support FAST.
 
 def get_init_creds_opt_set_fast_ccache(
     context: Context,

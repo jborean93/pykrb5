@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "Cython >= 0.29.32, < 4.0.0",  # 0.29.31 includes noexcept keyword support
+    "Cython == 3.1.3",
     "setuptools >= 42.0.0",  # Supports license_files
 ]
 build-backend = "setuptools.build_meta"
@@ -49,24 +49,3 @@ warn_unused_ignores = true
 [tool.pytest.ini_options]
 testpaths = "tests"
 addopts = "--import-mode=importlib"
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = sanity,py36,py37,py38,py39,py310
-skip_missing_interpreters = true
-isolated_build = True
-
-[testenv]
-deps =
-    -r{toxinidir}/requirements-dev.txt
-
-commands =
-    python -m pytest -v
-
-[testenv:sanity]
-commands =
-    python -m black . --check
-    python -m isort . --check-only
-    python -m mypy .
-"""

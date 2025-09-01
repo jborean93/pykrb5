@@ -1,7 +1,7 @@
-black==22.10.0
-isort==5.10.1
+black==25.1.0
+isort==6.0.1
 k5test>=0.10.4  # Needed for MITRealm.start_kadmind env default
-mypy==0.982
+mypy==1.17.1
 pre-commit
 pytest
 tox

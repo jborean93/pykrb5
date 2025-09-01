@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.8.0 - TBD
+## 0.8.0 - 2025-09-01
+
+* Require Python 3.9 or newer (dropped 3.8)
+* Pin Cython build requirements to `3.1.3` for enabling deterministic builds per release
 
 ## 0.7.1 - 2025-03-06
 

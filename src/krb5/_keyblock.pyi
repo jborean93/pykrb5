@@ -18,6 +18,7 @@ class KeyBlock:
     @property
     def data(self) -> bytes:
         """The keyblock data."""
+
     @property
     def enctype(self) -> int:
         """The keyblock encryption type."""
