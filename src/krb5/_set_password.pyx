@@ -65,10 +65,10 @@ class SetPasswordResultCode(enum.IntEnum):
         new_member._value_ = value
         return cls._value2member_map_.setdefault(value, new_member)
 
-class SetPasswordResult(typing.NamedTuple):
-    result_code: SetPasswordResultCode
-    result_code_string: bytes
-    server_response: bytes
+SetPasswordResult = typing.NamedTuple('SetPasswordResult',
+    result_code = SetPasswordResultCode,
+    result_code_string = bytes,
+    server_response = bytes)
 
 def set_password(
     Context context not None,
