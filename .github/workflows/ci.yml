@@ -55,15 +55,15 @@ jobs:
        include:
        # 3.11 builds with the Limited API/Stable ABI so should work on 3.11 and
        # newer.
-       - os: macOS-13
+       - os: macOS-15-intel
          version: cp311-macosx_x86_64
        - os: macOS-15
          version: cp311-macosx_arm64
-       - os: macOS-13
+       - os: macOS-15-intel
          version: cp310-macosx_x86_64
        - os: macOS-15
          version: cp310-macosx_arm64
-       - os: macOS-13
+       - os: macOS-15-intel
          version: cp39-macosx_x86_64
        - os: macOS-15
          version: cp39-macosx_arm64
