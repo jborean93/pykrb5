@@ -4,7 +4,6 @@
 import enum
 import typing
 
-from cpython cimport array
 from libc.stdint cimport int32_t, uintptr_t
 
 from krb5._exceptions import Krb5Error
