@@ -273,10 +273,16 @@ if not SKIP_EXTENSIONS:
         if ext:
             raw_extensions.append(ext)
 
+setup_options = {}
+if USE_LIMITED_API:
+    # Hardcode this option in pyproject.toml once 3.11 is minimum.
+    setup_options["bdist_wheel"] = {"py_limited_api": "cp311"}
+
 setup(
     ext_modules=cythonize(
         raw_extensions,
         language_level=3,
         compiler_directives={"linetrace": CYTHON_LINETRACE},
     ),
+    options=setup_options,
 )
