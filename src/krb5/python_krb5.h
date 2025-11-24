@@ -1,5 +1,9 @@
 #include "krb5.h"
 
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+
 #if defined(HEIMDAL_XFREE)
 typedef krb5_times pykrb5_ticket_times;
 #else

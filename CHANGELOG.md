@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.0 - TBD
+
+* Build using the Stable ABI/Limited API with Python 3.11 and newer
+* Updated Cython build requirements to `3.2.1`
+
 ## 0.8.0 - 2025-09-01
 
 * Require Python 3.9 or newer (dropped 3.8)

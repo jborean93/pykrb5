@@ -25,9 +25,9 @@ jobs:
     name: build sdist
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: 3.12
 
@@ -38,7 +38,7 @@ jobs:
       env:
         KRB5_SKIP_EXTENSIONS: true
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: artifact-sdist
         path: ./dist/*.tar.gz
@@ -53,35 +53,23 @@ jobs:
       fail-fast: false
       matrix:
        include:
-       - os: macOS-13
-         version: cp314-macosx_x86_64
-         prerelease: true
-       - os: macOS-15
-         version: cp314-macosx_arm64
-         prerelease: true
-       - os: macOS-13
-         version: cp313-macosx_x86_64
-       - os: macOS-15
-         version: cp313-macosx_arm64
-       - os: macOS-13
-         version: cp312-macosx_x86_64
-       - os: macOS-15
-         version: cp312-macosx_arm64
-       - os: macOS-13
+       # 3.11 builds with the Limited API/Stable ABI so should work on 3.11 and
+       # newer.
+       - os: macOS-15-intel
          version: cp311-macosx_x86_64
        - os: macOS-15
          version: cp311-macosx_arm64
-       - os: macOS-13
+       - os: macOS-15-intel
          version: cp310-macosx_x86_64
        - os: macOS-15
          version: cp310-macosx_arm64
-       - os: macOS-13
+       - os: macOS-15-intel
          version: cp39-macosx_x86_64
        - os: macOS-15
          version: cp39-macosx_arm64
 
     steps:
-    - uses: actions/download-artifact@v5
+    - uses: actions/download-artifact@v6
       with:
         name: artifact-sdist
         path: ./
@@ -94,13 +82,13 @@ jobs:
         rm krb5-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v3.1.4
+      uses: pypa/cibuildwheel@v3.3.0
       env:
         CIBW_BUILD: ${{ matrix.version }}
         CIBW_BUILD_VERBOSITY: 1
         CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease || 'false' }}
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         path: ./wheelhouse/*.whl
         name: artifact-wheel-${{ matrix.version }}
@@ -124,7 +112,7 @@ jobs:
         - '3.11'
         - '3.12'
         - '3.13'
-        - '3.14-dev'
+        - '3.14'
         provider:
         - mit
         - heimdal
@@ -134,13 +122,13 @@ jobs:
           provider: mit
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
 
-    - uses: actions/download-artifact@v5
+    - uses: actions/download-artifact@v6
       with:
         pattern: artifact-*
         merge-multiple: true
@@ -154,7 +142,7 @@ jobs:
 
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: Unit Test Results (${{ matrix.os }} ${{ matrix.provider }} ${{ matrix.python-version }})
         path: ./junit/test-results.xml
@@ -169,7 +157,7 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/download-artifact@v5
+    - uses: actions/download-artifact@v6
       with:
         pattern: artifact-*
         merge-multiple: true

@@ -28,6 +28,10 @@ SKIP_EXTENSIONS = os.environ.get("KRB5_SKIP_EXTENSIONS", "false").lower() == "tr
 SKIP_MODULE_CHECK = os.environ.get("KRB5_SKIP_MODULE_CHECK", "false").lower() == "true"
 CYTHON_LINETRACE = os.environ.get("KRB5_CYTHON_TRACING", "false").lower() == "true"
 
+# Enable limited API for Python 3.11+
+USE_LIMITED_API = sys.version_info >= (3, 11)
+LIMITED_API_VERSION = 0x030B0000  # Python 3.11 ABI
+
 
 def run_command(*args: str) -> str:
     stdout = subprocess.check_output(args, shell=True)
@@ -158,6 +162,12 @@ if not SKIP_EXTENSIONS:
     kc = get_krb5_config()
     print(f"Using krb5-config at '{kc}'")
 
+    define_macros = []
+
+    if USE_LIMITED_API:
+        print(f"Building with Python Limited API (Py_LIMITED_API={hex(LIMITED_API_VERSION)}) for Stable ABI")
+        define_macros.append(("Py_LIMITED_API", LIMITED_API_VERSION))
+
     macos_native = False
     if sys.platform == "darwin":
         mac_ver = [int(v) for v in platform.mac_ver()[0].split(".")]
@@ -257,9 +267,16 @@ if not SKIP_EXTENSIONS:
             include_dirs=include_dirs,
             library_dirs=library_dirs,
             libraries=libraries,
+            define_macros=define_macros,
+            py_limited_api=USE_LIMITED_API,
         )
         if ext:
             raw_extensions.append(ext)
+
+setup_options = {}
+if USE_LIMITED_API:
+    # Hardcode this option in pyproject.toml once 3.11 is minimum.
+    setup_options["bdist_wheel"] = {"py_limited_api": "cp311"}
 
 setup(
     ext_modules=cythonize(
@@ -267,4 +284,5 @@ setup(
         language_level=3,
         compiler_directives={"linetrace": CYTHON_LINETRACE},
     ),
+    options=setup_options,
 )
