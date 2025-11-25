@@ -100,3 +100,11 @@ if not hasattr(krb5, "kt_dup"):
 
 There may also be some difference in behaviour, error codes, error messages, between te different implementations.
 It is up to the caller to paper over these differences when required.
+
+## Python Free-Threading (PEP 779)
+
+This library supports Python Free-Threading and will build free-threading-compatible extension files if installed under a free-threading interpreter.
+Python 3.14t is tested in CI and a wheel for macOS will be created for 3.14t.
+Python 3.13t is not officially tested or supported but may or may not work.
+There is limited testing for free-threading in this library and it does not aim to be thread safe out of the box.
+If you encounter any issues or problems with this scenario please raise an issue and we can look at possible options to fix this.

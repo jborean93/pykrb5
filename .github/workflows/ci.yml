@@ -67,6 +67,11 @@ jobs:
          version: cp39-macosx_x86_64
        - os: macOS-15
          version: cp39-macosx_arm64
+       # Free-threaded Python builds (3.14t) - no Limited API/Stable ABI
+       - os: macOS-15-intel
+         version: cp314t-macosx_x86_64
+       - os: macOS-15
+         version: cp314t-macosx_arm64
 
     steps:
     - uses: actions/download-artifact@v6
@@ -113,6 +118,7 @@ jobs:
         - '3.12'
         - '3.13'
         - '3.14'
+        - '3.14t'
         provider:
         - mit
         - heimdal
