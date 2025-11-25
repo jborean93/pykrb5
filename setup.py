@@ -35,7 +35,7 @@ LIMITED_API_VERSION = 0x030B0000  # Python 3.11 ABI
 
 IS_FREE_THREADED = False
 if sysconfig.get_config_var("Py_GIL_DISABLED") == 1:
-    # Free threaded Python does not support the limited API.
+    # Free-threaded Python does not support the limited API.
     USE_LIMITED_API = False
     IS_FREE_THREADED = True
 
@@ -287,7 +287,7 @@ if USE_LIMITED_API:
 
 compiler_directives = {"linetrace": CYTHON_LINETRACE}
 if IS_FREE_THREADED:
-    # Enable free threading support in Cython
+    # Enable free-threading support in Cython
     compiler_directives["freethreading_compatible"] = True
 
 setup(
