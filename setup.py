@@ -19,6 +19,7 @@ import platform
 import shlex
 import subprocess
 import sys
+import sysconfig
 import typing
 
 from Cython.Build import cythonize
@@ -31,6 +32,12 @@ CYTHON_LINETRACE = os.environ.get("KRB5_CYTHON_TRACING", "false").lower() == "tr
 # Enable limited API for Python 3.11+
 USE_LIMITED_API = sys.version_info >= (3, 11)
 LIMITED_API_VERSION = 0x030B0000  # Python 3.11 ABI
+
+IS_FREE_THREADED = False
+if sysconfig.get_config_var("Py_GIL_DISABLED") == 1:
+    # Free threaded Python does not support the limited API.
+    USE_LIMITED_API = False
+    IS_FREE_THREADED = True
 
 
 def run_command(*args: str) -> str:
@@ -278,11 +285,16 @@ if USE_LIMITED_API:
     # Hardcode this option in pyproject.toml once 3.11 is minimum.
     setup_options["bdist_wheel"] = {"py_limited_api": "cp311"}
 
+compiler_directives = {"linetrace": CYTHON_LINETRACE}
+if IS_FREE_THREADED:
+    # Enable free threading support in Cython
+    compiler_directives["freethreading_compatible"] = True
+
 setup(
     ext_modules=cythonize(
         raw_extensions,
         language_level=3,
-        compiler_directives={"linetrace": CYTHON_LINETRACE},
+        compiler_directives=compiler_directives,
     ),
     options=setup_options,
 )

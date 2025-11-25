@@ -4,6 +4,10 @@
 
 * Build using the Stable ABI/Limited API with Python 3.11 and newer
 * Updated Cython build requirements to `3.2.1`
+* Added support for Python free threading (`PEP 779`)
+  * PyPI will contain wheels for macOS Python 3.14t
+  * Linux will still need to compile the extension at install time but will create a free threaded wheel if running under that interpreter
+  * Python 3.13t is not supported or tested so may or may not work
 
 ## 0.8.0 - 2025-09-01
 
