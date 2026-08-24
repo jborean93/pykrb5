@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.10.0 - TBD
+## 0.10.0 - 2026-08-24
 
 * Update wheels for CPython 3.15 and 3.15t on macOS
 * Updated Cython build requirements to `3.3.0`
