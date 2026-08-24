@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.0 - TBD
+
+* Update wheels for CPython 3.15 and 3.15t on macOS
+* Updated Cython build requirements to `3.3.0`
+
 ## 0.9.0 - 2025-11-26
 
 * Build using the Stable ABI/Limited API with Python 3.11 and newer
